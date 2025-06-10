@@ -1,13 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import SafeArea from '../safearea';
 export default function TabLayout() {
   return (
-    <Tabs>
+   
+    <Tabs >
+
+  
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: 'Home',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -17,6 +22,7 @@ export default function TabLayout() {
         name="add-expense"
         options={{
           title: 'Add Expense',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
@@ -26,6 +32,7 @@ export default function TabLayout() {
         name="settle"
         options={{
           title: 'Settle',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cash-outline" size={size} color={color} />
           ),
@@ -35,11 +42,13 @@ export default function TabLayout() {
         name="group"
         options={{
           title: 'Group',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" size={size} color={color} />
           ),
         }}
       />
     </Tabs>
+          
   );
 } 
