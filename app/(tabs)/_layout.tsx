@@ -1,13 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import SafeArea from '../safearea';
 export default function TabLayout() {
   return (
-   
+    <SafeAreaProvider>
     <Tabs >
-
-  
       <Tabs.Screen
         name="index"
         options={{
@@ -49,6 +47,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
-          
+    </SafeAreaProvider>
   );
 } 
