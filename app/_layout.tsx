@@ -1,10 +1,9 @@
 'use client'
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import './globals.css';
-import { Router, useRouter } from 'expo-router';
 export default function RootLayout() {
   const [Loading, setLoading] = useState(true);
   
@@ -12,7 +11,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     AsyncStorage.removeItem('group')
-    AsyncStorage.getItem('').then((groupStr) => {
+    AsyncStorage.getItem('').then((groupStr:any) => {
       if (groupStr) {
         const group = JSON.parse(groupStr);
         const now = Date.now();

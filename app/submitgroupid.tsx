@@ -13,7 +13,7 @@ export default function SubmitGroupId() {
       setError("Please enter a group ID.");
       return;
     }
-    // Replace this with your actual group fetch logic
+    // Fetch the group from the datbase here (have to set up in database) 
     await AsyncStorage.setItem(
       "group",
       JSON.stringify({ id: groupId, createdAt: Date.now() })
