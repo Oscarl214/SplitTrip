@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View , Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from './utils/supabase'
 interface CreateGroupViewProps {
   onBack: () => void
   onComplete: () => void
@@ -15,8 +16,7 @@ interface Member {
 }
 
 const CreateGroup = ({
-  onBack,
-  onComplete,
+  onBack
 }: CreateGroupViewProps) => {
   const router = useRouter();
   const [step, setStep] = useState(1)
@@ -42,6 +42,14 @@ const CreateGroup = ({
   const removeMember = (id: number) => {
     setMembers(members.filter((m) => m.id !== id))
   }
+
+//   const onComplete= async (email: [], groupname: string ,description: string | undefined, currency:string)=>{
+
+// try {
+
+// const {email, error}=await supabase.from()
+
+//   }
   const handleSubmit = () => {
     if (step < 3) {
         if(groupName===''){
@@ -51,6 +59,9 @@ const CreateGroup = ({
       setStep(step + 1)
     } else {
     //   onComplete()  //my function to send data to back end
+
+   
+
 
     if(members.length===0){
         Alert.alert('Must submit at least one email')
@@ -186,7 +197,7 @@ const CreateGroup = ({
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Feather name="arrow-left" size={20} />
+          {/* <Feather name="arrow-left" size={20} /> */}
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create New Group</Text>
       </View>

@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import GroupHeader from '../components/groupheader';
 import BalanceCard from '../components/balancecard';
 import Expenses from '../components/expenses';
+import GroupHeader from '../components/groupheader';
 
 const Index = () => {
   const router = useRouter();
@@ -19,7 +19,7 @@ const Index = () => {
           onPress={() => router.push('/(tabs)/settle')}
         >
           <Text className="text-blue-500 mr-1 text-sm font-medium">Settle Up</Text>
-        <Text><Ionicons name="arrow-forward-outline" size={14} color='blue' /></Text>  
+<Ionicons name="arrow-forward-outline" size={14} color='blue' /> 
         </Pressable>
       </View>
         <BalanceCard amount={-24.50}/>
@@ -29,7 +29,7 @@ const Index = () => {
           className="flex flex-row " 
           onPress={() => router.push('/(tabs)/add-expense')}
         >
- <Ionicons name="add-outline" size={24} color='black' className='mr-1' />
+ <Ionicons name="add-outline" size={24} color='black' style={{ marginRight: 4 }} />
 <Text className='text-xl font-medium text-blue-500'>Add Expense</Text>
         </Pressable>
         </View>
