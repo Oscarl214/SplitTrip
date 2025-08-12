@@ -13,7 +13,9 @@ const redirectTo = makeRedirectUri({
   path: '',
 });
 
-console.log({redirectTo})
+// console.log({redirectTo})
+
+//Function that creates the token & session based off the url once magic link is clicked on by user
 const createSessionFromUrl = async (url: string) => {
   const { params, errorCode } = QueryParams.getQueryParams(url);
 
@@ -32,6 +34,8 @@ const createSessionFromUrl = async (url: string) => {
   return data.session;
 };
 
+
+//IF we decide to add any other login methods: giothub, google, etc. 
 // const performOAuth = async () => {
 //   const { data, error } = await supabase.auth.signInWithOAuth({
 //     provider: "github",
@@ -61,6 +65,8 @@ export default function Auth() {
   const [email,setEmail]=useState('');
  
 
+
+  //function that sends magic link to email that is provided by user
   const sendMagicLink = async () => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -82,6 +88,8 @@ export default function Auth() {
   const url = Linking.useLinkingURL()
 
   console.log({url})
+
+  
   if (url) createSessionFromUrl(url);
 
   return (
