@@ -17,9 +17,12 @@ export default function RootLayout() {
 
     const {data: {session}}= await supabase.auth.getSession()
 
-if (!session) {
-  router.replace('/login')
-return;
+
+  
+if (session) {
+  router.replace('/creategroup')
+    }else if(!session){
+      router.replace('/auth')
     }
 
 

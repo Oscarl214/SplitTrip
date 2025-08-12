@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.splittrip"  
+      "bundleIdentifier": "com.supabase.splittrip"  
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yourname.splittrip"  
+      "package": "com.supabase.splittrip"  
     },
     "web": {
       "bundler": "metro",
@@ -31,7 +31,9 @@
     "experiments": {
       "typedRoutes": true
     },
-    "deepLinking": true
+    "deepLinking": {
+      "schemes": ["splittrip"]
+    }
   }
 }
 
