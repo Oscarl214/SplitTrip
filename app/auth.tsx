@@ -6,6 +6,7 @@ import { Button } from "react-native";
 import { supabase } from "./utils/supabase";
 import {TextInput,Alert, View } from "react-native";
 import { useLinkingURL } from "expo-linking";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from "react";
 // WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri({
@@ -93,18 +94,22 @@ export default function Auth() {
   if (url) createSessionFromUrl(url);
 
   return (
-    <>
-      <View className="flex-1 justify-center items-center gap-4 p-4">
+ 
+      <SafeAreaView className="flex-1 justify-center items-center gap-4 p-4">
+        <View className="max-w-sm w-full space-y-4">
+
       <TextInput
         placeholder="Enter your email"
         value={email}
         onChangeText={setEmail}
-        className="w-full border px-4 py-2 rounded-md"
+        className="w-full border px-4 py-2 rounded-md "
         keyboardType="email-address"
         autoCapitalize="none"
       />
+
+        </View>
       <Button onPress={sendMagicLink} title="Send Magic Link" />
-      </View>
-    </>
+      </SafeAreaView>
+    
   );
 }
