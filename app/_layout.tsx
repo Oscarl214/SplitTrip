@@ -35,12 +35,13 @@ function RootLayout() {
           .eq("id", userId)
           .single();
 
-        // Adjust error code check depending on your setup
+        // Adjust error code check on db for profiles
         if (profileError && profileError.code !== "PGRST116" && profileError.cause !== 404) {
           console.error("Error checking profile:", profileError);
           return;
         }
 
+        //if it does not exist then instert it to the profiles table
         if (!existingProfile) {
           const { error: insertError } = await supabase
             .from("profiles")
@@ -64,7 +65,9 @@ function RootLayout() {
 
         // Check cached active group from AsyncStorage
 
-        AsyncStorage.removeItem("activeGroup")
+        //This is to check if the user has logged in so they dont have to re log in w magic link
+        //kinda annoying in dev mode
+        // AsyncStorage.removeItem("activeGroup")
         const groupStr = await AsyncStorage.getItem("activeGroup");
 
         if (groupStr) {
