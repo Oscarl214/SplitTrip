@@ -6,6 +6,9 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View , Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from './utils/supabase'
+
+import { useSession } from './hooks/session';
+
 interface CreateGroupViewProps {
   onBack: () => void
   onComplete: () => void
@@ -27,6 +30,10 @@ const CreateGroup = ({
   const [members, setMembers] = useState<Member[]>([])
   const [newMemberEmail, setNewMemberEmail] = useState('')
 
+
+  const {id,email}= useSession()
+
+
   const addMember = () => {
     if (newMemberEmail && !members.some((m) => m.email === newMemberEmail)) {
       setMembers([
@@ -43,11 +50,11 @@ const CreateGroup = ({
     setMembers(members.filter((m) => m.id !== id))
   }
 
-//   const onComplete= async (email: [], groupname: string ,description: string | undefined, currency:string)=>{
+  const onComplete= async ( groupname: string ,description: string | undefined, createdby:  )=>{
 
-// try {
+try {
 
-// const {email, error}=await supabase.from()
+const {email, error}=await supabase.from()
 
 //   }
   const handleSubmit = () => {
@@ -116,34 +123,34 @@ const CreateGroup = ({
         )
 
      
+      // case 2:
+      //   return (
+      //     <SafeAreaView style={styles.section}>
+      //       <View style={styles.inputGroup}>
+      //         <Text style={styles.label}>Default Currency</Text>
+      //         <View style={styles.pickerWrapper}>
+      //           <Picker
+      //             selectedValue={currency}
+      //             onValueChange={setCurrency}
+      //             style={styles.picker}
+      //           >
+      //             <Picker.Item label="USD ($)" value="USD" />
+      //             <Picker.Item label="EUR (€)" value="EUR" />
+      //             <Picker.Item label="GBP (£)" value="GBP" />
+      //             <Picker.Item label="JPY (¥)" value="JPY" />
+      //             <Picker.Item label="AUD ($)" value="AUD" />
+      //             <Picker.Item label="CAD ($)" value="CAD" />
+      //           </Picker>
+      //         </View>
+      //       </View>
+      //       <View style={{ paddingTop: 16 }}>
+      //         <Text style={styles.infoText}>
+      //           This will be the default currency for all expenses in this group. Members can still enter expenses in other currencies, which will be converted automatically.
+      //         </Text>
+      //       </View>
+      //     </SafeAreaView>
+      //   )
       case 2:
-        return (
-          <SafeAreaView style={styles.section}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Default Currency</Text>
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={currency}
-                  onValueChange={setCurrency}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="USD ($)" value="USD" />
-                  <Picker.Item label="EUR (€)" value="EUR" />
-                  <Picker.Item label="GBP (£)" value="GBP" />
-                  <Picker.Item label="JPY (¥)" value="JPY" />
-                  <Picker.Item label="AUD ($)" value="AUD" />
-                  <Picker.Item label="CAD ($)" value="CAD" />
-                </Picker>
-              </View>
-            </View>
-            <View style={{ paddingTop: 16 }}>
-              <Text style={styles.infoText}>
-                This will be the default currency for all expenses in this group. Members can still enter expenses in other currencies, which will be converted automatically.
-              </Text>
-            </View>
-          </SafeAreaView>
-        )
-      case 3:
         return (
           <SafeAreaView style={styles.section}>
             <View style={styles.inputGroup}>
@@ -202,8 +209,8 @@ const CreateGroup = ({
         <Text style={styles.headerTitle}>Create New Group</Text>
       </View>
       <View style={styles.progressRow}>
-        {[1, 2, 3].map((i) => (
-          <View key={i} style={[styles.progressStep, i < 3 && { flex: 1 }]}> 
+        {[1, 2].map((i) => (
+          <View key={i} style={[styles.progressStep, i < 2 && { flex: 1 }]}> 
             <View
               style={[
                 styles.progressCircle,
@@ -212,7 +219,7 @@ const CreateGroup = ({
             >
               <Text style={{ color: i <= step ? '#fff' : '#888' }}>{i}</Text>
             </View>
-            {i < 3 && (
+            {i < 2 && (
               <View
                 style={[
                   styles.progressBar,
@@ -240,9 +247,9 @@ const CreateGroup = ({
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={[styles.navButtonText, { color: '#fff', marginRight: step === 3 ? 0 : 8 }]}> 
-                {step === 3 ? 'Create Group' : 'Next'}
+                {step === 2 ? 'Create Group' : 'Next'}
               </Text>
-              {step !== 3 && <Feather name="chevron-right" size={20} color="#fff" />}
+              {step !== 2 && <Feather name="chevron-right" size={20} color="#fff" />}
             </View>
           </TouchableOpacity>
         </View>

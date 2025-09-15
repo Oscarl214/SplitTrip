@@ -28,28 +28,16 @@ function RootLayout() {
         const userId = session.user.id;
         const userEmail = session.user.email;
 
-        // Check profile existence
-        const { data: existingProfile, error: profileError } = await supabase
+        // Upsert profile (insert or update if exists)
+        const { error: upsertError } = await supabase
           .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        // Adjust error code check on db for profiles
-        if (profileError && profileError.code !== "PGRST116" && profileError.cause !== 404) {
-          console.error("Error checking profile:", profileError);
+          .upsert([{ id: userId, email: userEmail }], {
+            onConflict: 'id'
+          });
+        
+        if (upsertError) {
+          console.error("Error upserting profile:", upsertError);
           return;
-        }
-
-        //if it does not exist then instert it to the profiles table
-        if (!existingProfile) {
-          const { error: insertError } = await supabase
-            .from("profiles")
-            .insert([{ id: userId, email: userEmail }]);
-          if (insertError) {
-            console.error("Error inserting profile:", insertError);
-            return;
-          }
         }
 
         // Get group memberships
@@ -87,7 +75,7 @@ function RootLayout() {
             router.replace("/(tabs)");
             return;
           } else {
-            await AsyncStorage.removeItem("activeGroup");
+            await AsyncStorage.removeItem("activeGroup"); 
             console.log("Cached active group expired or invalid, removed.");
           }
         }
@@ -95,7 +83,10 @@ function RootLayout() {
         // No cached or expired active group, route based on group membership count
         if (!memberships || memberships.length === 0) {
           console.log("No groups found, redirecting to /creategroup");
-          router.replace("/creategroup");
+
+          router.replace('/creategroup')
+       
+          // router.replace("/404")
         } else if (memberships.length === 1) {
           const groupId = memberships[0].group_id;
           console.log(`One group found, redirecting to /submitgroupid with group=${groupId}`);
@@ -103,6 +94,8 @@ function RootLayout() {
             pathname: "/submitgroupid/[id]",
             params: { id: groupId },
           });
+
+          //go directly to the app to show the group info as needed 
         } else {
           console.log("Multiple groups found, redirecting to /selectgroup");
           router.replace("/selectgroup");
@@ -117,7 +110,8 @@ function RootLayout() {
     checkAuth();
   }, []);
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack screenOptions={{ headerShown: false }} 
+  />;
 }
 
 export default RootLayout;

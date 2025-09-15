@@ -11,10 +11,10 @@ import { useState } from "react";
 // WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri({
   scheme: 'splittrip',
-  path: '',
+  path: '/',
 });
 
-// console.log({redirectTo})
+console.log({redirectTo})
 
 //Function that creates the token & session based off the url once magic link is clicked on by user
 const createSessionFromUrl = async (url: string) => {
