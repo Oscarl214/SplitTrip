@@ -50,11 +50,11 @@ const CreateGroup = ({
     setMembers(members.filter((m) => m.id !== id))
   }
 
-  const onComplete= async ( groupname: string ,description: string | undefined, createdby:  )=>{
+//   const onComplete= async ( groupname: string ,description: string | undefined, createdby:  )=>{
 
-try {
+// try {
 
-const {email, error}=await supabase.from()
+// const {email, error}=await supabase.from()
 
 //   }
   const handleSubmit = () => {
