@@ -1,13 +1,12 @@
 
 import { Feather } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View , Alert} from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from './utils/supabase'
+import { supabase } from './utils/supabase';
 
-import { useSession } from './hooks/session';
+import { useAuth } from './provider/authContext';
 
 interface CreateGroupViewProps {
   onBack: () => void
@@ -22,6 +21,7 @@ const CreateGroup = ({
   onBack
 }: CreateGroupViewProps) => {
   const router = useRouter();
+  const { contextsession } = useAuth();
   const [step, setStep] = useState(1)
   const [groupName, setGroupName] = useState('')
   const [groupType, setGroupType] = useState('')
@@ -29,9 +29,10 @@ const CreateGroup = ({
   const [description, setDescription] = useState('')
   const [members, setMembers] = useState<Member[]>([])
   const [newMemberEmail, setNewMemberEmail] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
 
 
-  const {id,email}= useSession()
+ 
 
 
   const addMember = () => {
@@ -50,31 +51,101 @@ const CreateGroup = ({
     setMembers(members.filter((m) => m.id !== id))
   }
 
-//   const onComplete= async ( groupname: string ,description: string | undefined, createdby:  )=>{
+  const onComplete = async () => {
+    if (!contextsession) {
+      Alert.alert('Error', 'You must be logged in to create a group');
+      return;
+    }
 
-// try {
+    setIsCreating(true);
 
-// const {email, error}=await supabase.from()
+    try {
+      // Create group for the current user
+      
+      // Step 1: Create the group first
+      const { data: groupData, error: groupError } = await supabase
+        .from('groups')
+        .insert({
+          name: groupName,
+          description: description || null,
+          created_by: contextsession.id,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-//   }
-  const handleSubmit = () => {
-    if (step < 3) {
+      if (groupError) {
+        console.error('Error creating group:', groupError);
+        console.log("Error Creating Group", groupError)
+        Alert.alert('Error', 'Failed to create group. Please try again.');
+        return;
+      }
+
+      const groupId = groupData.id;
+
+      // Step 2: Add the creator as the first member (admin)
+      const { error: creatorError } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: groupId,
+          profile_id: contextsession.id,
+          email: contextsession.email,
+          role: 'admin', // Creator becomes admin
+          joined_at: new Date().toISOString()
+        });
+
+      if (creatorError) {
+        console.error('Error adding creator to group:', creatorError);
+        Alert.alert('Error', 'Failed to add you to the group.');
+        return;
+      }
+
+      // Step 3: Add all invited members (as regular members)
+      if (members.length > 0) {
+        const memberInserts = members.map(member => ({
+          group_id: groupId,
+          email: member.email,
+          role: 'member', // Invited users start as regular members
+          joined_at: new Date().toISOString()
+        }));
+
+        const { error: membersError } = await supabase
+          .from('group_members')
+          .insert(memberInserts);
+
+        if (membersError) {
+          console.error('Error adding members to group:', membersError);
+          Alert.alert('Warning', 'Group created but some members could not be added.');
+        }
+      }
+
+      // Navigate immediately after successful group creation
+      // The app-content.tsx will handle routing to the appropriate screen
+      router.replace('/');
+
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (step < 2) {
         if(groupName===''){
             Alert.alert("Must Submit a Group Name to go to Next Step")
             return
         }
       setStep(step + 1)
     } else {
-    //   onComplete()  //my function to send data to back end
-
-   
-
-
-    if(members.length===0){
+      // Final step - create the group
+      if (members.length === 0) {
         Alert.alert('Must submit at least one email')
         return;
-    }
-      router.replace('/')
+      }
+      
+      await onComplete();
     }
   }
   const renderStep = () => {
@@ -243,11 +314,12 @@ const CreateGroup = ({
           )}
           <TouchableOpacity
             onPress={handleSubmit}
-            style={[styles.navButton, styles.primaryButton, { marginLeft: step > 1 ? 8 : 0 }]}
+            disabled={isCreating}
+            style={[styles.navButton, styles.primaryButton, { marginLeft: step > 1 ? 8 : 0, opacity: isCreating ? 0.6 : 1 }]}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[styles.navButtonText, { color: '#fff', marginRight: step === 3 ? 0 : 8 }]}> 
-                {step === 2 ? 'Create Group' : 'Next'}
+              <Text style={[styles.navButtonText, { color: '#fff', marginRight: step === 2 ? 0 : 8 }]}> 
+                {step === 2 ? (isCreating ? 'Creating...' : 'Create Group') : 'Next'}
               </Text>
               {step !== 2 && <Feather name="chevron-right" size={20} color="#fff" />}
             </View>

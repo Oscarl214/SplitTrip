@@ -73,16 +73,48 @@ const AppContent = () => {
             return;
           }
   
-          // Get group memberships
-          const { data: memberships, error: membershipError } = await supabase
+          // Get all groups the user is associated with
+          console.log("Checking groups for user ID:", userId);
+          
+          // 1. Get groups the user created
+          const { data: createdGroups, error: createdGroupsError } = await supabase
+            .from("groups")
+            .select("id")
+            .eq("created_by", userId);
+
+          if (createdGroupsError) {
+            console.error("Error checking created groups:", createdGroupsError);
+            return;
+          }
+
+          // 2. Get groups the user is a member of (but didn't create)
+          const { data: memberGroups, error: memberGroupsError } = await supabase
             .from("group_members")
             .select("group_id")
             .eq("profile_id", userId);
-  
-          if (membershipError) {
-            console.error("Error checking memberships:", membershipError);
+
+          if (memberGroupsError) {
+            console.error("Error checking member groups:", memberGroupsError);
             return;
           }
+
+          // 3. Combine both lists (avoid duplicates)
+          const allGroupIds = new Set();
+          
+          // Add created groups
+          if (createdGroups) {
+            createdGroups.forEach(group => allGroupIds.add(group.id));
+          }
+          
+          // Add member groups
+          if (memberGroups) {
+            memberGroups.forEach(member => allGroupIds.add(member.group_id));
+          }
+
+          const totalGroups = Array.from(allGroupIds);
+          console.log("Found total groups:", totalGroups);
+          console.log("Created groups:", createdGroups?.length || 0);
+          console.log("Member groups:", memberGroups?.length || 0);
   
           // Check cached active group from AsyncStorage
   
@@ -96,15 +128,14 @@ const AppContent = () => {
             const now = Date.now();
             const twentyFourHours = 24 * 60 * 60 * 1000;
   
-            const isValidGroup =
-              memberships && memberships.some((m) => m.group_id === activeGroup.id);
+            const isValidGroup = totalGroups.includes(activeGroup.id);
   
             if (
               activeGroup.createdAt &&
               now - activeGroup.createdAt < twentyFourHours &&
               isValidGroup
             ) {
-              console.log("Using cached active group, routing to /(tabs)");
+              console.log("Using cached active group, routing to main app");
               router.replace("/(tabs)");
               return;
             } else {
@@ -113,14 +144,21 @@ const AppContent = () => {
             }
           }
   
-          // No cached or expired active group, route based on group membership count
-          if (!memberships || memberships.length === 0) {
+          // No cached or expired active group, route based on total group count
+          if (totalGroups.length === 0) {
             console.log("No groups found, routing to /creategroup");
             router.replace("/creategroup");
-          } else if (memberships.length === 1) {
-            const groupId = memberships[0].group_id;
-            console.log(`One group found, routing to /submitgroupid with group=${groupId}`);
-            router.replace(`/submitgroupid/${groupId}`);
+          } else if (totalGroups.length === 1) {
+            const groupId = totalGroups[0];
+            console.log(`One group found, routing to main app with group=${groupId}`);
+            
+            // Store the active group for the app to use
+            await AsyncStorage.setItem("activeGroup", JSON.stringify({
+              id: groupId,
+              createdAt: Date.now()
+            }));
+            
+            router.replace("/(tabs)");
           } else {
             console.log("Multiple groups found, routing to /selectgroup");
             router.replace("/selectgroup");
