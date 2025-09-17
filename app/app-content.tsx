@@ -56,7 +56,7 @@ const AppContent = () => {
           const { error: upsertError } = await supabase
             .from("profiles")
             .upsert([{ id: userId, email: userEmail }], {
-              onConflict: 'id'
+              onConflict: 'email'
             });
           
           if (upsertError) {

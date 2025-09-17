@@ -7,10 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from "./provider/authContext";
 import { supabase } from "./utils/supabase";
 // WebBrowser.maybeCompleteAuthSession(); // required for web only
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-
-
+import { LoginPageStyles } from "./styles/loginstyles";
 const redirectTo = makeRedirectUri({
   scheme: 'splittrip',
   path: '/',
@@ -80,6 +80,12 @@ export default function Login() {
     }
   };
 
+  const clearSession = async () => {
+    await supabase.auth.signOut();
+    setContextSession(null);
+    Alert.alert('Session Cleared', 'All authentication data has been cleared');
+  };
+
 
   const url = Linking.useLinkingURL()
 
@@ -126,25 +132,31 @@ export default function Login() {
     }
   }, [url, createSessionFromUrl]);
 
-  
+  const inputstyles=LoginPageStyles()
 
   return (
  
-      <SafeAreaView className="flex-1 justify-center items-center gap-4 p-4">
-        <View className="max-w-sm w-full space-y-4">
+        <LinearGradient
+          colors={['#2b5876', '#4e4376']}
+          className="absolute inset-0"
+        >
+          <SafeAreaView className="flex-1 justify-center items-center gap-4 p-4">
+        <View style={{ width: '100%', maxWidth: 300 }}>
 
-      <TextInput
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        className="w-full border px-4 py-2 rounded-md "
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+          <TextInput
+            placeholder="Enter your email"
+            placeholderTextColor="#666"
+            value={email}
+            onChangeText={setEmail}
+            style={inputstyles.input}
+            keyboardType="email-address"
+            autoCapitalize="none" />
 
         </View>
-      <Button onPress={sendMagicLink} title="Send Magic Link" />
+        <Button onPress={sendMagicLink} title="Send Magic Link" />
+        <Button onPress={clearSession} title="Clear Session (Debug)" color="red" />
       </SafeAreaView>
+      </LinearGradient>
     
   );
 }
