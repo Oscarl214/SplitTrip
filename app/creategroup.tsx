@@ -36,6 +36,13 @@ const CreateGroup = ({
 
 
   const addMember = () => {
+
+    if(newMemberEmail===contextsession?.email){
+
+    Alert.alert("Cannot submit your own email")
+     setNewMemberEmail('')
+    return
+    }
     if (newMemberEmail && !members.some((m) => m.email === newMemberEmail)) {
       setMembers([
         ...members,
@@ -91,6 +98,8 @@ const CreateGroup = ({
           profile_id: contextsession.id,
           email: contextsession.email,
           role: 'admin', // Creator becomes admin
+          status: 'active', // Creator is immediately active
+          invited_at: new Date().toISOString(), // Required field
           joined_at: new Date().toISOString()
         });
 
@@ -101,17 +110,24 @@ const CreateGroup = ({
       }
 
       // Step 3: Add all invited members (as regular members)
+
+
       if (members.length > 0) {
         const memberInserts = members.map(member => ({
           group_id: groupId,
           email: member.email,
+          profile_id: null,
           role: 'member', // Invited users start as regular members
-          joined_at: new Date().toISOString()
+          joined_at: new Date().toISOString(),
+          status: 'invited',
+          invited_at: new Date().toISOString(),
         }));
 
-        const { error: membersError } = await supabase
+        const {data:groupmembers, error: membersError } = await supabase
           .from('group_members')
           .insert(memberInserts);
+
+
 
         if (membersError) {
           console.error('Error adding members to group:', membersError);

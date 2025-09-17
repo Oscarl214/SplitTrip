@@ -19,19 +19,19 @@ const Index = () => {
           onPress={() => router.push('/(tabs)/settle')}
         >
           <Text className="text-blue-500 mr-1 text-sm font-medium">Settle Up</Text>
-<Ionicons name="arrow-forward-outline" size={14} color='blue' /> 
+          <Ionicons name="arrow-forward-outline" size={14} color='blue' /> 
         </Pressable>
       </View>
         <BalanceCard amount={-24.50}/>
         <View className='flex flex-row justify-between mt-8'>
-<Text className='text-2xl font-bold'>Recent Expenses</Text>
-<Pressable 
-          className="flex flex-row " 
-          onPress={() => router.push('/(tabs)/add-expense')}
-        >
- <Ionicons name="add-outline" size={24} color='black' style={{ marginRight: 4 }} />
-<Text className='text-xl font-medium text-blue-500'>Add Expense</Text>
-        </Pressable>
+          <Text className='text-2xl font-bold'>Recent Expenses</Text>
+          <Pressable 
+            className="flex flex-row " 
+            onPress={() => router.push('/(tabs)/add-expense')}
+          >
+          <Ionicons name="add-outline" size={24} color='black' style={{ marginRight: 4 }} />
+          <Text className='text-xl font-medium text-blue-500'>Add Expense</Text>
+          </Pressable>
         </View>
         <Expenses/>
     </SafeAreaView>

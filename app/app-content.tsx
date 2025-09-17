@@ -72,6 +72,21 @@ const AppContent = () => {
             }
             return;
           }
+
+          // Update any invited memberships to active status
+          const { error: updateMembershipError } = await supabase
+            .from('group_members')
+            .update({ 
+              profile_id: userId, 
+              status: 'active',
+              joined_at: new Date().toISOString()
+            })
+            .eq('email', userEmail)
+            .is('profile_id', null);
+            
+          if (updateMembershipError) {
+            console.error('Error updating invited membership:', updateMembershipError);
+          }
   
           // Get all groups the user is associated with
           console.log("Checking groups for user ID:", userId);
@@ -91,7 +106,7 @@ const AppContent = () => {
           const { data: memberGroups, error: memberGroupsError } = await supabase
             .from("group_members")
             .select("group_id")
-            .eq("profile_id", userId);
+            .or(`profile_id.eq.${userId},email.eq.${userEmail}`);
 
           if (memberGroupsError) {
             console.error("Error checking member groups:", memberGroupsError);
@@ -172,7 +187,7 @@ const AppContent = () => {
       };
   
       checkAuth();
-    }, [contextsession, router]);
+    }, [contextsession, sessionLoading, router]);
   
   console.log('AppContent rendering');
   

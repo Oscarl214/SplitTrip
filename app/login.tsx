@@ -1,7 +1,7 @@
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Linking from "expo-linking";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, TextInput, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from "./provider/authContext";
@@ -53,11 +53,12 @@ export default function Login() {
   const [email,setEmail]=useState('');
   const router = useRouter();
 
-  // If user is already authenticated, redirect to app-content
-  if (contextsession) {
-    router.replace('/app-content');
-    return null;
-  }
+  // Handle redirect when user is already authenticated
+  useEffect(() => {
+    if (contextsession) {
+      router.replace('/app-content');
+    }
+  }, [contextsession, router]);
  
 
 
@@ -116,11 +117,14 @@ export default function Login() {
     // Navigate to app-content after successful login
     router.replace('/app-content');
     return data.session;
-  }, [setContextSession]);
-  
+  }, [setContextSession, router]);
 
-
-  if (url) createSessionFromUrl(url);
+  // Use useEffect to handle URL processing instead of conditional hook call
+  useEffect(() => {
+    if (url) {
+      createSessionFromUrl(url);
+    }
+  }, [url, createSessionFromUrl]);
 
   
 
