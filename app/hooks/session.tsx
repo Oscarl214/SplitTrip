@@ -5,7 +5,8 @@ import { supabase } from "../utils/supabase";
 
 interface SessionType {
     id: string,
-    email: string 
+    email: string,
+    name?: string
 }
 
 

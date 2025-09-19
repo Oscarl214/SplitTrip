@@ -1,9 +1,10 @@
-import { createContext, ReactNode , useContext} from "react"
-import { useSession } from "../hooks/session"
+import { createContext, ReactNode, useContext } from "react";
+import { useSession } from "../hooks/session";
 
 interface SessionType {
     id: string,
-    email: string
+    email: string,
+    name?: string
 }
 
 interface AuthContextType{

@@ -51,6 +51,7 @@ console.log({redirectTo})
 export default function Login() {
   const {setContextSession, contextsession}=useAuth()
   const [email,setEmail]=useState('');
+
   const router = useRouter();
 
   // Handle redirect when user is already authenticated

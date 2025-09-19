@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage';
 import { supabase } from '../utils/supabase';
-
+import GroupHeaderSkeleton from './UI/groupHeaderSkeleton';
 interface GroupInfo {
   id: 'string',
   createdAt: 'string'
@@ -22,6 +22,8 @@ const GroupHeader = () => {
 const [ groupinfo, setGroupInfo]=useState<GroupInfo | null>(null);
 const [groupData,setGroupData]=useState<GroupData | null>(null)
 const [members, setMembers] = useState<any[]>([]);;
+const [loading, setLoading]= useState(true);
+
 
 useEffect(() => {
   const fetchGroupInfo = async () => {
@@ -69,32 +71,38 @@ useEffect(() => {
         return;
       }
 
-      setGroupData(data);
-      setMembers(members || []);
+      setTimeout(()=>{
+
+        setLoading(false)
+        setGroupData(data);
+        setMembers(members || []);
+      },2000)
       console.log('Group data loaded:', data);
       console.log('Members loaded:', members);
     } catch (error) {
       console.error('Error in fetchGroupData:', error);
     }
   };
-
+ 
   fetchGroupData();
 }, [groupinfo]); // Run when groupinfo changes
 
-   
+   if(loading){
+    return <GroupHeaderSkeleton/>
+   }
+
   return (
     <View className='flex items-center flex-row justify-between'>
+      <View className='flex flex-row justify-start'>
       <Text className='text-2xl font-bold'>{`${groupData?.name}`}</Text>
+
+      </View>
       <View className='flex flex-col'>
 
       <View className='flex flex-row items-center text-gray-500'>
         <Ionicons name="people-outline" size={24} color='gray' style={{ marginRight: 4 }}/>
         <Text>{`Active Members ${members?.length}`}</Text>
       </View>
-      {/* <View className='flex flex-row items-center text-gray-500'>
-      <Ionicons name="people-outline" size={24} color='gray' style={{ marginRight: 4 }}/>
-      <Text>{`Active Members ${members.length}`}</Text> */}
-      {/* </View> */}
       </View>
       
     </View>

@@ -3,18 +3,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import "./globals.css";
-import { supabase } from "./utils/supabase";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Text, View } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
+import "./globals.css";
 import { useAuth } from "./provider/authContext";
+import { supabase } from "./utils/supabase";
 
 
 const AppContent = () => {
 
     const router = useRouter();
  
-    const {contextsession,loading:sessionLoading}=useAuth()
+    const {contextsession,loading:sessionLoading,setContextSession}=useAuth()
     const [navigationLoading, setNavigationLoading] = useState(false);
   
     const isLoading = sessionLoading || navigationLoading;
@@ -52,25 +52,32 @@ const AppContent = () => {
             return;
           }
 
-          // Upsert profile (insert or update if exists)
-          const { error: upsertError } = await supabase
+          // Check if user profile exists and has a name
+          const { data: existingProfile, error: profileCheckError } = await supabase
             .from("profiles")
-            .upsert([{ id: userId, email: userEmail }], {
-              onConflict: 'email'
-            });
-          
-          if (upsertError) {
-            console.error("Error upserting profile:", upsertError);
-            // If it's a foreign key constraint error, the user doesn't exist in auth.users
-            if (upsertError.code === '23503') {
-              console.log("User doesn't exist in auth.users, signing out");
-              // Clear any cached data
-              await AsyncStorage.removeItem("activeGroup");
-              await supabase.auth.signOut();
-              router.replace("/login");
-              return;
-            }
+            .select("id, email, name")
+            .eq("id", userId)
+            .single();
+
+          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+            console.error("Error checking profile:", profileCheckError);
             return;
+          }
+
+          // If profile doesn't exist or doesn't have a name, redirect to profile setup
+          if (!existingProfile || !existingProfile.name) {
+            console.log("User needs to complete profile setup");
+            router.replace("/profile-setup");
+            return;
+          }
+
+          // Update session context with the name (only if different)
+          if (contextsession?.name !== existingProfile.name) {
+            setContextSession({
+              id: userId,
+              email: userEmail,
+              name: existingProfile.name
+            });
           }
 
           // Update any invited memberships to active status
@@ -187,7 +194,7 @@ const AppContent = () => {
       };
   
       checkAuth();
-    }, [contextsession, sessionLoading, router]);
+    }, [sessionLoading, router]);
   
   console.log('AppContent rendering');
   
