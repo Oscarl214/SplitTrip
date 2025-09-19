@@ -2,7 +2,7 @@ export const LoginPageStyles=()=>{
 
    const styles={
       input: {
-        height: 75,
+        height: 60,
         borderWidth: 2,
         borderRadius: 20,
         paddingHorizontal: 20,

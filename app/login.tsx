@@ -138,7 +138,13 @@ export default function Login() {
  
         <LinearGradient
           colors={['#2b5876', '#4e4376']}
-          className="absolute inset-0"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+          }}
         >
           <SafeAreaView className="flex-1 justify-center items-center gap-4 p-4">
         <View style={{ width: '100%', maxWidth: 300 }}>
@@ -156,7 +162,7 @@ export default function Login() {
         <Button onPress={sendMagicLink} title="Send Magic Link" />
         <Button onPress={clearSession} title="Clear Session (Debug)" color="red" />
       </SafeAreaView>
-      </LinearGradient>
+       </LinearGradient>
     
   );
 }

@@ -5,8 +5,8 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import "./globals.css";
 import { supabase } from "./utils/supabase";
-
-import { ActivityIndicator, Text } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Text, View } from 'react-native';
 import { useAuth } from "./provider/authContext";
 
 
@@ -192,10 +192,21 @@ const AppContent = () => {
   console.log('AppContent rendering');
   
   if (isLoading) {
-    return <ActivityIndicator size="large" />;
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+
+
+    <ActivityIndicator size="large" />
+   
+      </SafeAreaView>
+    );
   }
   
-  return <Text>Welcome! Session loaded successfully.</Text>;
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Welcome! Session loaded successfully.</Text>
+    </View>
+  );
 }
 
 export default AppContent
