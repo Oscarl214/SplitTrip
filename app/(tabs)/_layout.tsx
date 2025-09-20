@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
-import SafeArea from '../safearea';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 export default function TabLayout() {
   return (
     <SafeAreaProvider>
@@ -44,6 +43,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="addMember"
+        options={{
+          href: null, 
+          title: 'Add Member',
+          headerShown: false,
         }}
       />
     </Tabs>

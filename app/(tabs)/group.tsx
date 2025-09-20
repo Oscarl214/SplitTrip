@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MemberListSkeleton from '../components/UI/memberslistSkeleton';
 import { useAuth } from '../provider/authContext';
 import { supabase } from '../utils/supabase';
 interface GroupInfo {
@@ -61,7 +62,7 @@ const Group = () => {
             <Text className="text-xs text-orange-500 font-medium">Invited</Text>
           )}
         </View>
-        {item.status === 'active' && item.profiles?.name !== 'oscar' && (
+        {item.status === 'invited' && (
           <TouchableOpacity className="text-gray-400">
             <FontAwesome5 name="bell" size={24} color="black" />
           </TouchableOpacity>
@@ -138,6 +139,8 @@ const Group = () => {
       fetchGroupData();
     }, [groupinfo]); // Run when groupinfo changes
     
+
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="p-4">
@@ -150,19 +153,26 @@ const Group = () => {
 
         <View className="flex-row justify-between items-center mb-4">
           <Text className="text-lg font-medium">Group Members</Text>
-          <TouchableOpacity className="flex-row items-center">
+          <TouchableOpacity 
+            className="flex-row items-center"
+            onPress={() => router.push('/(tabs)/addMember')}
+          >
           <Feather name="user-plus" size={24} color="black" />
             <Text className="text-blue-500 ml-1">Invite</Text>
           </TouchableOpacity>
         </View>
 
-        <FlatList 
-          data={members}
-          renderItem={renderMember}
-          keyExtractor={keyExtractor}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
-        />
+{loading ? <MemberListSkeleton/> : (
+
+  <FlatList 
+    data={members}
+    renderItem={renderMember}
+    keyExtractor={keyExtractor}
+    showsVerticalScrollIndicator={false}
+    ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
+  />
+
+)}
 
         <View className="mt-8">
           <Text className="text-lg font-medium mb-4">Group Settings</Text>
@@ -181,7 +191,6 @@ const Group = () => {
           </TouchableOpacity>
             <TouchableOpacity className="w-full flex-row items-center justify-between p-4 border border-gray-200 rounded-lg">
               <Text className="font-medium">Group Name</Text>
-              
               <AntDesign name="arrowleft" size={24} color="black" style={{ transform: [{ rotate: '180deg' }] }} />
             </TouchableOpacity>
           </View>
