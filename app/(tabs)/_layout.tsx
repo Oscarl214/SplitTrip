@@ -48,7 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="addMember"
         options={{
-          href: null, 
+          // href: null, 
           title: 'Add Member',
           headerShown: false,
         }}

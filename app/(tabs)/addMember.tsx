@@ -1,10 +1,7 @@
-import { View, Text , TextInput, StyleSheet} from 'react-native'
-import { TouchableOpacity
-
- } from 'react-native'
- import { AntDesign } from '@expo/vector-icons'
-import React, {useState} from 'react'
+import { AntDesign } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
+import React, { useState } from 'react'
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 const addMember = () => {
 
@@ -30,6 +27,14 @@ const addMember = () => {
             keyboardType="email-address"
             autoCapitalize="none" />
            </View>
+           <View className='px-4'>
+           <TouchableOpacity className="bg-blue-500 px-6 py-3 rounded-lg items-center">
+            <Text  className="text-white font-medium text-center">Invite a Member</Text>
+           </TouchableOpacity>
+
+           </View>
+
+          
     </SafeAreaView>
   )
 }
@@ -50,4 +55,8 @@ const styles=StyleSheet.create({
         color: '#000000',
         textAlign: 'left' as const,
       },
+      button: {
+        width: 54,
+        height: 45,
+      }
   })
