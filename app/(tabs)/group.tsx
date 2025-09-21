@@ -162,17 +162,19 @@ const Group = () => {
           </TouchableOpacity>
         </View>
 
+<View style={styles.flatListContainer}>
 {loading ? <MemberListSkeleton/> : (
 
   <FlatList 
-    data={members}
-    renderItem={renderMember}
-    keyExtractor={keyExtractor}
-    showsVerticalScrollIndicator={false}
-    ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
+  data={members}
+  renderItem={renderMember}
+  keyExtractor={keyExtractor}
+  showsVerticalScrollIndicator={false}
+  ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
   />
-
+  
 )}
+</View>
 
         <View className="mt-8">
           <Text className="text-lg font-medium mb-4">Group Settings</Text>
@@ -203,4 +205,9 @@ const Group = () => {
 
 export default Group
 
-const styles = StyleSheet.create({}) 
+const styles = StyleSheet.create({
+  flatListContainer: {
+    height: 400, 
+    borderRadius: 1
+  },
+}) 
