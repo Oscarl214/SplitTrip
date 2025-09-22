@@ -1,14 +1,108 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, FlatList , StyleSheet} from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
+
+interface GroupData {
+    id: number | null,
+    name: 'string' | null,
+  created_by: number | null,
+  created_at: number | null, 
+  description: number | null,
+  }
+  
+  interface GroupMember {
+    id:number | null,
+    group_id: number | null,
+    profile_id: number | null,
+    joined_at: number | null,
+    email: string,
+    role: string | null,
+    status: 'active' | 'invited' | null,
+    invited_at: string | null,
+    profiles?: {
+      name: string | null
+    }
+  }
+  
+  
+  interface GroupHeaderProps {
+    loading: boolean;
+    members: GroupMember[];
+    groupData: GroupData | null;
+  }
 
 const ExpenseForm = () => {
-    const router = useRouter();
 
+    const [groupData,setGroupData]=useState<GroupData | null>(null)
+const [members, setMembers] = useState<GroupMember[]>([]);;
+const [loading, setLoading]= useState(true);
+
+    const router = useRouter();
     const onBack = () => {
         router.back();
     };
+
+    const [description,setDescription]=useState('')
+    const [amount,setAmount]=useState('')
+    const [payer,setPayer]=useState('')
+    const [participants,setParticipents]=useState('')
+
+
+    const [showdroplist,setDropList]=useState(false);
+
+    
+    useEffect(()=>{
+
+        const setState=async () =>{
+        try{
+
+           const loadingData = await AsyncStorage.getItem('loading');
+           const membersData= await AsyncStorage.getItem('members');
+           const groupData=await AsyncStorage.getItem('groupData')
+           
+           
+       if(loadingData !== null){
+        const loadingState=JSON.parse(loadingData)
+        setLoading(loadingState)
+    }
+    if(membersData !== null){
+        const membersState=JSON.parse(membersData)
+        setMembers(membersState)
+    }
+    if(groupData !== null){
+        const groupDataState=JSON.parse(groupData)
+        setGroupData(groupDataState)
+    }
+
+
+  
+        }catch(error){
+            console.error("error fetching State")
+        }
+    }
+  
+    setState();
+    }, [])
+
+    // Render function for each member item
+    const renderMember = ({ item }: { item: GroupMember }) => (
+        <View className="flex-row items-center justify-between p-3 border-b border-gray-100">
+          <View className="flex-1">
+            <Text className="font-medium">{item.profiles?.name || item.email}</Text>
+            {item.status === 'invited' && (
+              <Text className="text-xs text-orange-500 font-medium">Invited</Text>
+            )}
+          </View>
+        </View>
+      );
+  
+      // Key extractor function - returns unique key for each item
+      const keyExtractor = (item: GroupMember) => item.id?.toString() || item.email;
+
+
 
     return (
         <ScrollView className="flex  bg-white">
@@ -28,6 +122,9 @@ const ExpenseForm = () => {
                         <TextInput
                             className="w-full p-3 border border-gray-300 rounded-lg"
                             placeholder="What was this expense for?"
+                            value={description}
+                            onChangeText={setDescription}
+                            autoCapitalize="none" 
                         />
                     </View>
 
@@ -41,6 +138,9 @@ const ExpenseForm = () => {
                                 className="w-full p-3 pl-8 border border-gray-300 rounded-lg"
                                 placeholder="0.00"
                                 keyboardType="numeric"
+                                value={amount}
+                                onChangeText={setAmount}
+                            
                             />
                         </View>
                     </View>
@@ -53,6 +153,9 @@ const ExpenseForm = () => {
                             <TextInput
                                 className="w-full"
                                 placeholder="Select payer"
+                                value={payer}
+                                onChangeText={setPayer}
+                                autoCapitalize="none" 
                             />
                         </View>
                     </View>
@@ -76,16 +179,14 @@ const ExpenseForm = () => {
                         <Text className="text-sm font-medium text-gray-700 mb-1">
                             Split between
                         </Text>
-                        <View className="space-y-2 p-3 border border-gray-300 rounded-lg">
-                            {['You', 'Michael', 'Emma', 'John', 'Sarah'].map((person) => (
-                                <TouchableOpacity
-                                    key={person}
-                                    className="flex-row items-center"
-                                >
-                                    <View className="w-4 h-4 border border-gray-300 rounded mr-2" />
-                                    <Text>{person}</Text>
-                                </TouchableOpacity>
-                            ))}
+                        <View style={styles.flatListContainer}>
+                        <FlatList 
+  data={members}
+  renderItem={renderMember}
+  keyExtractor={keyExtractor}
+  showsVerticalScrollIndicator={false}
+  ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
+  />
                         </View>
                     </View>
 
@@ -103,3 +204,12 @@ const ExpenseForm = () => {
 };
 
 export default ExpenseForm;
+
+
+
+const styles = StyleSheet.create({
+    flatListContainer: {
+      height: 400, 
+      borderRadius: 1
+    },
+  }) 

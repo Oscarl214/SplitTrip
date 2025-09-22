@@ -1,9 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Text, View } from 'react-native';
-import { supabase } from '../utils/supabase';
 import GroupHeaderSkeleton from './UI/groupHeaderSkeleton';
 interface GroupInfo {
   id: 'string',
@@ -18,78 +15,29 @@ created_at: number | null,
 description: number | null,
 }
 
-
-const GroupHeader = () => {
-const [ groupinfo, setGroupInfo]=useState<GroupInfo | null>(null);
-const [groupData,setGroupData]=useState<GroupData | null>(null)
-const [members, setMembers] = useState<any[]>([]);;
-const [loading, setLoading]= useState(true);
-
-
-useFocusEffect(
-  React.useCallback(() => {
-    const fetchGroupInfo = async () => {
-      try {
-        const value = await AsyncStorage.getItem("activeGroup");
-        if (value !== null) {
-          console.log("Group Info", value);
-          const parsedValue = JSON.parse(value);
-          setGroupInfo(parsedValue);
-        }
-      } catch (e) {
-        console.error("error fetching group Info", e);
-      }
-    };
-    
-    fetchGroupInfo();
-  }, [])
-);
-
-useEffect(() => {
-  if (!groupinfo?.id) {
-    console.log('No groupinfo or group ID available yet');
-    return;
+interface GroupMember {
+  id:number | null,
+  group_id: number | null,
+  profile_id: number | null,
+  joined_at: number | null,
+  email: string,
+  role: string | null,
+  status: 'active' | 'invited' | null,
+  invited_at: string | null,
+  profiles?: {
+    name: string | null
   }
+}
 
-  const fetchGroupData = async () => {
-    try {
-      const groupId = groupinfo.id;
-      console.log('Fetching group with ID:', groupId);
 
-      // Fetch group data
-      const { data, error: groupError } = await supabase
-        .from('groups')
-        .select('*')
-        .eq('id', groupId)
-        .single();
+interface GroupHeaderProps {
+  loading: boolean;
+  members: GroupMember[];
+  groupData: GroupData | null;
+}
 
-      // Fetch members
-      const { data: members, error: membersError } = await supabase
-        .from("group_members")
-        .select('*')
-        .eq('group_id', groupId)
-        .eq('status', 'active');
+const GroupHeader = ({loading, members, groupData}: GroupHeaderProps) => {
 
-      if (groupError || membersError) {
-        console.error('Error fetching data:', groupError || membersError);
-        return;
-      }
-
-      setTimeout(()=>{
-
-        setLoading(false)
-        setGroupData(data);
-        setMembers(members || []);
-      },2000)
-      console.log('Group data loaded:', data);
-      console.log('Members loaded:', members);
-    } catch (error) {
-      console.error('Error in fetchGroupData:', error);
-    }
-  };
- 
-  fetchGroupData();
-}, [groupinfo]); // Run when groupinfo changes
 
    if(loading){
     return <GroupHeaderSkeleton/>

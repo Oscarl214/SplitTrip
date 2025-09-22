@@ -1,11 +1,13 @@
 import { AntDesign } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react'
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '../provider/authContext'
 import { supabase } from '../utils/supabase'
+import { LinearGradient } from 'expo-linear-gradient'
 interface GroupInfo {
     id: 'string',
     createdAt: 'string'
@@ -24,11 +26,12 @@ const ChangeGroupInfo = () => {
 const {contextsession}=useAuth();
 
 const [groupInfo,setGroupInfo]=useState<GroupInfo | null>(null);
-
+const [groupData,setGroupData]=useState<GroupData | null>(null)
 const [groupname,setGroupName]=useState('')
 const [description,setDescription]=useState('')
 
-useEffect(()=>{
+useFocusEffect(
+    React.useCallback(() => {
 
     const fetchGroupInfo= async ()=>{
 
@@ -40,6 +43,8 @@ useEffect(()=>{
             const parsedValue=JSON.parse(value)
             setGroupInfo(parsedValue)
         }
+
+
     }catch(e){
         console.error("error fetching group Info", e);
     }
@@ -47,8 +52,41 @@ useEffect(()=>{
 
 
     fetchGroupInfo()
-
+    
 }, [])
+)
+
+useEffect(()=>{
+    if(!groupInfo?.id){
+        console.log("Group Id not available")
+        return
+    }
+
+    const fetchGroupData= async ()=>{
+
+        try {
+        const groupId = groupInfo.id;
+
+        const { data, error: groupError } = await supabase
+        .from('groups')
+        .select('*')
+        .eq('id', groupId)
+        .single();
+
+
+        if(groupError){
+            console.error('Error fetching data', groupError)
+            return
+        }
+
+        setGroupData(data);
+        }catch(error){
+            console.error('Error in fetchGroupData:', error);
+        }
+    }
+
+    fetchGroupData()
+}, [groupInfo])
 
 const updateGroupInfo= async () =>{
     const groupId = groupInfo?.id;
@@ -60,7 +98,10 @@ const updateGroupInfo= async () =>{
    
     if(!groupname && !description){
         Alert.alert('Error', 'Please provide a name or description to update');
+   return;
     }
+
+
 
     // Build update object with only non-empty fields
     const updateData: any = {};
@@ -80,6 +121,8 @@ const updateGroupInfo= async () =>{
             Alert.alert('Success', 'Group Updated Successfully');
 setGroupName('');
 setDescription('');
+
+
             setTimeout(() => {
                 router.push('/');
               }, 500);
@@ -102,6 +145,26 @@ setDescription('');
         </View>
     <Text className='text-2xl font-bold mb-5 px-3'>Change Group Info!</Text>
     <View style={styles.formContainer}>
+    <LinearGradient
+    colors={['#ffffff', '#ffa500']}
+    style={{
+        paddingVertical: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    }}
+>
+    <View className='px-3'>
+
+            <Text className='text-xl font-bold mb-5 '>Current Group Name: {groupData?.name}</Text>
+            <Text className='text-xl font-bold mb-5 '>Current Description: {`"${groupData?.description}"`}</Text>
+    </View>
+        </LinearGradient>
     <TextInput
             placeholder="Enter new Group Name"
             placeholderTextColor="EX: Grand Teton National Park"
@@ -142,13 +205,14 @@ const styles=StyleSheet.create({
     input: {
         height: 60,
         borderWidth: 1,
+        margin: 4,
         borderRadius: 20,
         paddingHorizontal: 20,
         paddingVertical: 16,
         fontSize: 17,
         backgroundColor: 'white',
         fontWeight: "500" as const,
-        borderColor: '#ddd',
+        borderColor: '#fff',
         color: '#000000',
         textAlign: 'left' as const,
       },
