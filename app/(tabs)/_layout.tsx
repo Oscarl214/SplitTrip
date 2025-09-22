@@ -53,6 +53,14 @@ export default function TabLayout() {
           headerShown: false,
         }}
       />
+            <Tabs.Screen
+        name="changegroupinfo"
+        options={{
+          // href: null, 
+          title: 'Update Group',
+          headerShown: false,
+        }}
+      />
     </Tabs>
     </SafeAreaProvider>
   );

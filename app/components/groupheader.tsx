@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage';
 import { supabase } from '../utils/supabase';
 import GroupHeaderSkeleton from './UI/groupHeaderSkeleton';
 interface GroupInfo {
@@ -25,22 +26,25 @@ const [members, setMembers] = useState<any[]>([]);;
 const [loading, setLoading]= useState(true);
 
 
-useEffect(() => {
-  const fetchGroupInfo = async () => {
-    try {
-      const value = await AsyncStorage.getItem("activeGroup");
-      if (value !== null) {
-        console.log("Group Info", value);
-        const parsedValue = JSON.parse(value);
-        setGroupInfo(parsedValue);
+useFocusEffect(
+  React.useCallback(() => {
+    const fetchGroupInfo = async () => {
+      try {
+        const value = await AsyncStorage.getItem("activeGroup");
+        if (value !== null) {
+          console.log("Group Info", value);
+          const parsedValue = JSON.parse(value);
+          setGroupInfo(parsedValue);
+        }
+      } catch (e) {
+        console.error("error fetching group Info", e);
       }
-    } catch (e) {
-      console.error("error fetching group Info", e);
-    }
-  };
-  
-  fetchGroupInfo();
-}, []);
+    };
+    
+    fetchGroupInfo();
+  }, [])
+);
+
 useEffect(() => {
   if (!groupinfo?.id) {
     console.log('No groupinfo or group ID available yet');
