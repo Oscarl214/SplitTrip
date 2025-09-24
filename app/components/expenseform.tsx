@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View, FlatList , StyleSheet} from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+import DropDownList from './dropdownList';
 interface GroupData {
     id: number | null,
     name: 'string' | null,
@@ -47,13 +47,16 @@ const [loading, setLoading]= useState(true);
 
     const [description,setDescription]=useState('')
     const [amount,setAmount]=useState('')
-    const [payer,setPayer]=useState('')
+    const [payer,setPayer]=useState<GroupMember | null>(null)
     const [participants,setParticipents]=useState('')
 
 
     const [showdroplist,setDropList]=useState(false);
 
-    
+    const showList=()=>{
+        setDropList(true)
+        return
+    }
     useEffect(()=>{
 
         const setState=async () =>{
@@ -105,7 +108,7 @@ const [loading, setLoading]= useState(true);
 
 
     return (
-        <ScrollView className="flex  bg-white">
+        <ScrollView className="flex-1 bg-white">
             <View className="p-4">
                 <View className="flex-row items-center mb-6">
                     <TouchableOpacity onPress={onBack} className="p-2 mr-2">
@@ -150,13 +153,12 @@ const [loading, setLoading]= useState(true);
                             Paid by
                         </Text>
                         <View className="border border-gray-300 rounded-lg bg-white p-3">
-                            <TextInput
-                                className="w-full"
-                                placeholder="Select payer"
-                                value={payer}
-                                onChangeText={setPayer}
-                                autoCapitalize="none" 
-                            />
+                            
+                            { (!showdroplist) ?   <TouchableOpacity onPress={showList}><Text>Select a Group Member</Text></TouchableOpacity>  :  
+                                
+                                 <DropDownList members={members} payer={payer} setPayer={setPayer} /> 
+                            }
+
                         </View>
                     </View>
 
