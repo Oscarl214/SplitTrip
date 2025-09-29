@@ -3,12 +3,13 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MemberListSkeleton from '../components/UI/memberslistSkeleton';
 import { useAuth } from '../provider/authContext';
 import { supabase } from '../utils/supabase';
+import { useFocusEffect } from '@react-navigation/native';
 interface GroupInfo {
   id: 'string',
   createdAt: 'string'
@@ -74,7 +75,8 @@ const Group = () => {
     const keyExtractor = (item: GroupMember) => item.id?.toString() || item.email;
     
     
-    useEffect(() => {
+    useFocusEffect(
+      React.useCallback(() => {
       const fetchGroupInfo = async () => {
         try {
           const value = await AsyncStorage.getItem("activeGroup");
@@ -89,7 +91,9 @@ const Group = () => {
       };
       
       fetchGroupInfo();
-    }, []);
+    }, [])
+  )
+
     useEffect(() => {
       if (!groupinfo?.id) {
         console.log('No groupinfo or group ID available yet');

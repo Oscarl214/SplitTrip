@@ -23,23 +23,23 @@ interface GroupData {
   }
   
   
-  interface GroupHeaderProps {
-    loading: boolean;
-    members: GroupMember[];
-    groupData: GroupData | null;
-  }
+
 
   
-const DropDownList = ({members, payer, setPayer}: {members: GroupMember[], payer: GroupMember | null, setPayer: (payer: GroupMember | null) => void}) => {
+const DropDownList = ({members, payer, setPayer, setDropList}: {members: GroupMember[], payer: GroupMember | null, setDropList: (value: boolean) => void, setPayer: (payer: GroupMember | null) => void}) => {
 
 
-    const selectMember=(payer: GroupMember)=>{
+
+    const selectMember=(payer: GroupMember)=>{ //this function should set the value seclected as the new payer
         
+      setPayer(payer)
+      setDropList(false)
+      return;
     }
     const renderMember = ({ item }: { item: GroupMember }) => (
         <View className="flex-row items-center justify-between p-3 border-b border-gray-100">
           <View className="flex-1">
-           <TouchableOpacity>
+           <TouchableOpacity onPress={()=>selectMember(item)}>
 
 
             <Text className="font-medium">{item.profiles?.name || item.email}</Text>

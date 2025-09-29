@@ -5,6 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import DropDownList from './dropdownList';
+import { DatePicker } from '@/components/ui/date-picker';
+
 interface GroupData {
     id: number | null,
     name: 'string' | null,
@@ -49,7 +51,7 @@ const [loading, setLoading]= useState(true);
     const [amount,setAmount]=useState('')
     const [payer,setPayer]=useState<GroupMember | null>(null)
     const [participants,setParticipents]=useState('')
-
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
     const [showdroplist,setDropList]=useState(false);
 
@@ -154,9 +156,12 @@ const [loading, setLoading]= useState(true);
                         </Text>
                         <View className="border border-gray-300 rounded-lg bg-white p-3">
                             
-                            { (!showdroplist) ?   <TouchableOpacity onPress={showList}><Text>Select a Group Member</Text></TouchableOpacity>  :  
+                            { (!showdroplist) ?   <TouchableOpacity onPress={showList}>
+
+                              <Text>  {(!payer) ? "Select a Group Member" : (payer.profiles?.name || payer.email) }</Text>
+                                </TouchableOpacity>  :  
                                 
-                                 <DropDownList members={members} payer={payer} setPayer={setPayer} /> 
+                                 <DropDownList members={members} payer={payer} setPayer={setPayer} setDropList={setDropList} /> 
                             }
 
                         </View>
@@ -167,13 +172,10 @@ const [loading, setLoading]= useState(true);
                             Date
                         </Text>
                         <View className="relative">
-                            <TextInput
-                                className="w-full p-3 border border-gray-300 rounded-lg"
-                                placeholder="Select date"
-                            />
-                            <View className="absolute right-3 top-3">
-                                <Ionicons name="calendar" size={20} color="#9CA3AF" />
-                            </View>
+                       <DatePicker  label='Select Date'
+      value={selectedDate}
+      onChange={setSelectedDate}
+      placeholder='Choose a date'/>
                         </View>
                     </View>
 
