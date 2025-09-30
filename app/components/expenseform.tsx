@@ -4,9 +4,9 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+import DateTimePicker from '@react-native-community/datetimepicker';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import DropDownList from './dropdownList';
-import { DatePicker } from '@/components/ui/date-picker';
-
 interface GroupData {
     id: number | null,
     name: 'string' | null,
@@ -36,9 +36,12 @@ interface GroupData {
     groupData: GroupData | null;
   }
 
+
+
 const ExpenseForm = () => {
 
-    const [groupData,setGroupData]=useState<GroupData | null>(null)
+//Grpup data states
+const [groupData,setGroupData]=useState<GroupData | null>(null)
 const [members, setMembers] = useState<GroupMember[]>([]);;
 const [loading, setLoading]= useState(true);
 
@@ -47,18 +50,21 @@ const [loading, setLoading]= useState(true);
         router.back();
     };
 
+    //Users Input States
     const [description,setDescription]=useState('')
     const [amount,setAmount]=useState('')
     const [payer,setPayer]=useState<GroupMember | null>(null)
-    const [participants,setParticipents]=useState('')
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [participants,setParticipents]=useState<GroupMember[]>([])
 
+    //States pertaining to the Date Section
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [showCalendar,setShowCalendar]=useState(false)
+    const [mode, setMode] = useState<'date' | 'time' | 'datetime'>('date');
+
+    //State pertaining to the drop list for Selecting Payer
     const [showdroplist,setDropList]=useState(false);
 
-    const showList=()=>{
-        setDropList(true)
-        return
-    }
+//my Use effect that runs on mount to load in the group data
     useEffect(()=>{
 
         const setState=async () =>{
@@ -96,10 +102,13 @@ const [loading, setLoading]= useState(true);
     const renderMember = ({ item }: { item: GroupMember }) => (
         <View className="flex-row items-center justify-between p-3 border-b border-gray-100">
           <View className="flex-1">
+            <TouchableOpacity onPress={()=>onPartcipantSelection({item})}>
+
             <Text className="font-medium">{item.profiles?.name || item.email}</Text>
             {item.status === 'invited' && (
-              <Text className="text-xs text-orange-500 font-medium">Invited</Text>
+                <Text className="text-xs text-orange-500 font-medium">Invited</Text>
             )}
+            </TouchableOpacity>
           </View>
         </View>
       );
@@ -107,6 +116,50 @@ const [loading, setLoading]= useState(true);
       // Key extractor function - returns unique key for each item
       const keyExtractor = (item: GroupMember) => item.id?.toString() || item.email;
 
+
+          //function that sets the value to true if User clicks on the drop down button
+    const showList=()=>{
+        setDropList(true)
+        return
+    }
+
+    //Function that ensures a numeric value is inputted into the amount section
+      const onAmountChange=(text: any)=>{
+        if(!isNaN(text)){
+            setAmount(text)
+        }
+        return
+      }
+
+
+      //Function that shows the Date Picker Calendar once User clicks on Calendar Button
+      const showDatepicker = () => {
+        setShowCalendar(true)
+      };
+
+//Function that sets the user selected date to the state and sets the show calendar to false
+      const onDateChange = (event: any, selectedDate?: Date) => {
+        const currentDate = selectedDate;
+        setShowCalendar(false)
+        setSelectedDate(currentDate);
+      };
+    
+//Function that checks participants array based on Users selection of member
+
+const onPartcipantSelection=({ item }: { item: GroupMember })=>{
+
+    //I need to check against the parcipant array to check if selected member exist
+    //to remove if selected or //add if not
+    const isSelected = participants.some(p => p.id === item.id)
+
+    if(isSelected){
+        setParticipents(participants.filter(p => p.id !== item.id));
+    }else {
+        setParticipents([...participants, item]);
+    }
+
+    console.log("Current Particpants", participants)
+}
 
 
     return (
@@ -144,7 +197,7 @@ const [loading, setLoading]= useState(true);
                                 placeholder="0.00"
                                 keyboardType="numeric"
                                 value={amount}
-                                onChangeText={setAmount}
+                                onChangeText={onAmountChange}
                             
                             />
                         </View>
@@ -171,11 +224,26 @@ const [loading, setLoading]= useState(true);
                         <Text className="text-sm font-medium text-gray-700 mb-1">
                             Date
                         </Text>
-                        <View className="relative">
-                       <DatePicker  label='Select Date'
-      value={selectedDate}
-      onChange={setSelectedDate}
-      placeholder='Choose a date'/>
+                        <View className=" relative mb-2">
+                            <View className='flex flex-row justify-between'>
+
+                            <Text>{(!selectedDate) ? 'Pick a Date!' : selectedDate.toLocaleDateString()}</Text>
+                        <TouchableOpacity onPress={showDatepicker} ><Text className='animate-pulse'>
+                        <FontAwesome name="calendar" color="#FFA500" size={24} />
+                            </Text>
+                            </TouchableOpacity>
+                            </View>
+{showCalendar && (
+
+    <DateTimePicker 
+    
+    testID="dateTimePicker"
+value={selectedDate || new Date()}
+mode={mode}
+is24Hour={true}
+onChange={onDateChange}/>
+
+)}
                         </View>
                     </View>
 
