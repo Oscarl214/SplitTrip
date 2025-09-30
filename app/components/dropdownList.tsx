@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+
 interface GroupData {
     id: number | null,
     name: 'string' | null,
@@ -26,7 +27,16 @@ interface GroupData {
 
 
   
-const DropDownList = ({members, payer, setPayer, setDropList}: {members: GroupMember[], payer: GroupMember | null, setDropList: (value: boolean) => void, setPayer: (payer: GroupMember | null) => void}) => {
+const DropDownList = ({ 
+  members, 
+  payer, 
+  setPayer, 
+  setDropList,
+  types,
+  selectedType,
+  setSelectedType,
+  setShowDropdown
+}: {members: GroupMember[], payer: GroupMember | null, setDropList: (value: boolean) => void, setPayer: (payer: GroupMember | null) => void}) => {
 
 
 

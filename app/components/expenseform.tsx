@@ -1,12 +1,86 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import DropDownList from './dropdownList';
+import TypeDropdown from './typedropdown';
+
+
+export interface ExpenseType {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+    description?: string;
+  }
+  
+  export const EXPENSE_TYPES: ExpenseType[] = [
+    {
+      id: 'food',
+      name: 'Food & Dining',
+      icon: 'silverware-fork-knife',
+      color: '#EAB308',
+      description: 'Restaurants, groceries, food delivery'
+    },
+    {
+      id: 'transportation',
+      name: 'Transportation',
+      icon: 'car',
+      color: '#3B82F6',
+      description: 'Gas, flights, taxis, public transport'
+    },
+    {
+      id: 'accommodation',
+      name: 'Accommodation',
+      icon: 'bed',
+      color: '#8B5CF6',
+      description: 'Hotels, Airbnb, hostels'
+    },
+    {
+      id: 'entertainment',
+      name: 'Entertainment',
+      icon: 'movie',
+      color: '#F59E0B',
+      description: 'Movies, shows, activities'
+    },
+    {
+      id: 'shopping',
+      name: 'Shopping',
+      icon: 'shopping',
+      color: '#22C55E',
+      description: 'Souvenirs, clothes, gifts'
+    },
+    {
+      id: 'utilities',
+      name: 'Utilities',
+      icon: 'lightning-bolt',
+      color: '#EF4444',
+      description: 'Electricity, water, internet'
+    },
+    {
+      id: 'other',
+      name: 'Other',
+      icon: 'dots-horizontal',
+      color: '#6B7280',
+      description: 'Miscellaneous expenses'
+    }
+  ];
+  
+  interface ExpenseFormData {
+    description: string;
+    amount: number;
+    payer: GroupMember | null;
+    selectedDate: Date | undefined;
+    participants: GroupMember[];
+    groupId: number | null;
+    type: ExpenseType | null; 
+  }
+
 interface GroupData {
     id: number | null,
     name: 'string' | null,
@@ -64,6 +138,11 @@ const [loading, setLoading]= useState(true);
     //State pertaining to the drop list for Selecting Payer
     const [showdroplist,setDropList]=useState(false);
 
+
+    //State Pertaining to Expense Type:
+
+    const [selectedType, setSelectedType] = useState<ExpenseType | null>(null);
+const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 //my Use effect that runs on mount to load in the group data
     useEffect(()=>{
 
@@ -99,19 +178,25 @@ const [loading, setLoading]= useState(true);
     }, [])
 
     // Render function for each member item
-    const renderMember = ({ item }: { item: GroupMember }) => (
-        <View className="flex-row items-center justify-between p-3 border-b border-gray-100">
-          <View className="flex-1">
-            <TouchableOpacity onPress={()=>onPartcipantSelection({item})}>
+    const renderMember = ({ item }: { item: GroupMember }) => {
+        
+        const isSelected = participants.some(p => p.id === item.id);
 
-            <Text className="font-medium">{item.profiles?.name || item.email}</Text>
-            {item.status === 'invited' && (
-                <Text className="text-xs text-orange-500 font-medium">Invited</Text>
-            )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
+        return (
+        <TouchableOpacity 
+            onPress={()=>onPartcipantSelection({item})}
+            className={`flex-row items-center justify-between p-3 border-b border-gray-100 ${isSelected ? 'bg-[#008000]' : 'bg-white'}`}
+        >
+            <View className="flex-1">
+                <Text className="font-medium">{item.profiles?.name || item.email}</Text>
+                {item.status === 'invited' && (
+                    <Text className="text-xs text-orange-500 font-medium">Invited</Text>
+                )}
+            </View>
+            {isSelected ? <AntDesign name="checkcircleo" color="#008000" size={24} /> : <Feather name="circle" color="#000" size={24} /> }
+        </TouchableOpacity>
+        )
+    }
   
       // Key extractor function - returns unique key for each item
       const keyExtractor = (item: GroupMember) => item.id?.toString() || item.email;
@@ -142,6 +227,7 @@ const [loading, setLoading]= useState(true);
         const currentDate = selectedDate;
         setShowCalendar(false)
         setSelectedDate(currentDate);
+        return
       };
     
 //Function that checks participants array based on Users selection of member
@@ -158,10 +244,49 @@ const onPartcipantSelection=({ item }: { item: GroupMember })=>{
         setParticipents([...participants, item]);
     }
 
-    console.log("Current Particpants", participants)
+return
 }
 
+const onSubmit = () => {
+    // Get all the form values
+    const formData = {
+        description: description,           // string - expense description
+        amount: parseFloat(amount),         // number - expense amount (converted from string)
+        payer: payer,                      // GroupMember | null - who paid
+        selectedDate: selectedDate,         // Date | undefined - when the expense occurred
+        participants: participants,        // GroupMember[] - who to split between
+        groupId: groupData?.id,   
+        type: selectedType         // number | null - which group this expense belongs to
+    };
 
+    // TODO: Add your logic here
+    // Examples of what you might want to do:
+    
+    // 1. Validation
+    // - Check if description is not empty
+    // - Check if amount is greater than 0
+    // - Check if payer is selected
+    // - Check if at least one participant is selected
+    // - Check if date is selected
+    
+    if(!description){
+        Alert.alert("no description Provided")
+    }
+    // 2. Data processing
+    // - Calculate split amounts per participant
+    // - Format date for database storage
+    // - Prepare data for API call
+    
+    // 3. API call
+    // - Submit expense to your backend/database
+    // - Handle success/error responses
+    
+    // 4. Navigation
+    // - Navigate back to previous screen on success
+    // - Show error message on failure
+    
+    console.log('Form data:', formData);
+};
     return (
         <ScrollView className="flex-1 bg-white">
             <View className="p-4">
@@ -173,6 +298,27 @@ const onPartcipantSelection=({ item }: { item: GroupMember })=>{
                 </View>
 
                 <View className="space-y-6">
+                <View>
+  <Text className="text-sm font-medium text-gray-700 mb-1">
+    Category
+  </Text>
+  <View className="border border-gray-300 rounded-lg bg-white p-3">
+    {!showTypeDropdown ? (
+      <TouchableOpacity onPress={() => setShowTypeDropdown(true)}>
+        <Text>
+          {!selectedType ? "Select a category" : selectedType.name}
+        </Text>
+      </TouchableOpacity>
+    ) : (
+      <TypeDropdown 
+        types={EXPENSE_TYPES} 
+        selectedType={selectedType} 
+        setSelectedType={setSelectedType} 
+        setShowDropdown={setShowTypeDropdown} 
+      />
+    )}
+  </View>
+</View>
                     <View>
                         <Text className="text-sm font-medium text-gray-700 mb-1">
                             Description
@@ -224,26 +370,22 @@ const onPartcipantSelection=({ item }: { item: GroupMember })=>{
                         <Text className="text-sm font-medium text-gray-700 mb-1">
                             Date
                         </Text>
-                        <View className=" relative mb-2">
+                        <View className="relative mb-2">
                             <View className='flex flex-row justify-between'>
-
-                            <Text>{(!selectedDate) ? 'Pick a Date!' : selectedDate.toLocaleDateString()}</Text>
-                        <TouchableOpacity onPress={showDatepicker} ><Text className='animate-pulse'>
-                        <FontAwesome name="calendar" color="#FFA500" size={24} />
-                            </Text>
-                            </TouchableOpacity>
+                                <Text>{(!selectedDate) ? 'Pick a Date!' : selectedDate.toLocaleDateString()}</Text>
+                                <TouchableOpacity onPress={showDatepicker}>
+                                    <FontAwesome name="calendar" color="#FFA500" size={24} />
+                                </TouchableOpacity>
                             </View>
-{showCalendar && (
-
-    <DateTimePicker 
-    
-    testID="dateTimePicker"
-value={selectedDate || new Date()}
-mode={mode}
-is24Hour={true}
-onChange={onDateChange}/>
-
-)}
+                            {showCalendar && (
+                                <DateTimePicker 
+                                    testID="dateTimePicker"
+                                    value={selectedDate || new Date()}
+                                    mode={mode}
+                                    is24Hour={true}
+                                    onChange={onDateChange}
+                                />
+                            )}
                         </View>
                     </View>
 
@@ -264,6 +406,7 @@ onChange={onDateChange}/>
 
                     <TouchableOpacity
                         className="w-full bg-blue-500 py-3 rounded-lg mt-4"
+                        onPress={onSubmit}
                     >
                         <Text className="text-white text-center font-medium">
                             Add Expense
