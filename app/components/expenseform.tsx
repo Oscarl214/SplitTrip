@@ -7,6 +7,7 @@ import { Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpac
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { supabase } from '../utils/supabase';
 import DropDownList from './dropdownList';
 import TypeDropdown from './typedropdown';
 
@@ -247,7 +248,7 @@ const onPartcipantSelection=({ item }: { item: GroupMember })=>{
 return
 }
 
-const onSubmit = () => {
+const onSubmit = async () => {
     // Get all the form values
     const formData = {
         description: description,           // string - expense description
@@ -259,8 +260,7 @@ const onSubmit = () => {
         type: selectedType         // number | null - which group this expense belongs to
     };
 
-    // TODO: Add your logic here
-    // Examples of what you might want to do:
+
     
     // 1. Validation
     // - Check if description is not empty
@@ -272,6 +272,24 @@ const onSubmit = () => {
     if(!description){
         Alert.alert("no description Provided")
     }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert("Please enter a valid amount");
+      return;
+    }
+    if (!payer) {
+      Alert.alert("Please select who paid");
+      return;
+    }
+    if (!selectedType) {
+      Alert.alert("Please select a category");
+      return;
+    }
+    if (participants.length === 0) {
+      Alert.alert("Please select at least one participant");
+      return;
+    }
+
     // 2. Data processing
     // - Calculate split amounts per participant
     // - Format date for database storage
@@ -280,12 +298,74 @@ const onSubmit = () => {
     // 3. API call
     // - Submit expense to your backend/database
     // - Handle success/error responses
-    
-    // 4. Navigation
-    // - Navigate back to previous screen on success
-    // - Show error message on failure
-    
-    console.log('Form data:', formData);
+    try {
+      
+      const expenseAmount=parseFloat(amount);
+      
+      const amountPerPerson= expenseAmount/participants.length;
+      
+      const {data:expenseData, error: expenseError}=await supabase
+      .from('expenses')
+      .insert({
+        description: formData.description,
+        amount: expenseAmount,
+        payer_id: formData.payer?.id,
+        group_id: formData.groupId,
+        type_id: formData.type?.id,
+        expense_date: formData.selectedDate?.toISOString(),
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+      
+      if (expenseError) throw expenseError;
+      
+      
+      
+      // Create expense participants with split amounts
+      const participantRecords = participants.map(participant => ({
+        expense_id: expenseData.id,
+        profile_id: participant.id,  // Changed from participant_id to profile_id
+        amount_owed: amountPerPerson,
+        amount_paid: participant.id === payer.id ? amountPerPerson : 0  // Add amount_paid field
+      }));
+      
+      const { error: participantError } = await supabase
+      .from('expense_participants')
+      .insert(participantRecords);
+      
+      if (participantError) throw participantError;
+      
+      // Update group balances
+      // The payer gets credited (positive balance)
+      // Other participants get debited (negative balance)
+      for (const participant of participants) {
+        const balanceChange = participant.id === payer.id 
+          ? expenseAmount - amountPerPerson  // Payer gets back what others owe them
+          : -amountPerPerson;               // Others owe their share
+        
+        // Update or create balance record
+        const { error: balanceError } = await supabase
+          .from('group_balances')
+          .upsert({
+            group_id: groupData?.id,
+            user_id: participant.id,
+            balance: balanceChange,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'group_id,user_id',
+            ignoreDuplicates: false
+          });
+      
+        if (balanceError) throw balanceError;
+      }
+
+Alert.alert("Expense added successfully!");
+router.back();
+} catch (error) {
+console.error('Error adding expense:', error);
+Alert.alert("Error adding expense");
+}
 };
     return (
         <ScrollView className="flex-1 bg-white">
