@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BalanceCard from '../components/balancecard';
 import Expenses from '../components/expenses';
 import GroupHeader from '../components/groupheader';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
 
@@ -108,9 +108,9 @@ useEffect(() => {
 
 
       try {
-        const loadingState=JSON.stringify(loading)
-        const membersState=JSON.stringify(members)
-        const groupDataState=JSON.stringify(groupData)
+        const loadingState=JSON.stringify(false)  // Use the new loading state
+        const membersState=JSON.stringify(members || [])  // Use the newly fetched members
+        const groupDataState=JSON.stringify(data)  // Use the newly fetched group data
         await AsyncStorage.setItem('loading', loadingState)
  await AsyncStorage.setItem('members', membersState)
  await AsyncStorage.setItem('groupData', groupDataState )

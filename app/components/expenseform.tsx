@@ -7,6 +7,7 @@ import { Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpac
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { useAuth } from '../provider/authContext';
 import { supabase } from '../utils/supabase';
 import DropDownList from './dropdownList';
 import TypeDropdown from './typedropdown';
@@ -121,6 +122,7 @@ const [members, setMembers] = useState<GroupMember[]>([]);;
 const [loading, setLoading]= useState(true);
 
     const router = useRouter();
+    const { contextsession } = useAuth(); // Move useAuth to top level
     const onBack = () => {
         router.back();
     };
@@ -165,6 +167,7 @@ const [showTypeDropdown, setShowTypeDropdown] = useState(false);
     }
     if(groupData !== null){
         const groupDataState=JSON.parse(groupData)
+        console.log("Loaded group data from AsyncStorage:", groupDataState);
         setGroupData(groupDataState)
     }
 
@@ -252,7 +255,7 @@ const onSubmit = async () => {
     // Get all the form values
     const formData = {
         description: description,           // string - expense description
-        amount: parseFloat(amount),         // number - expense amount (converted from string)
+        total_amount: parseFloat(amount),         // number - expense amount (converted from string)
         payer: payer,                      // GroupMember | null - who paid
         selectedDate: selectedDate,         // Date | undefined - when the expense occurred
         participants: participants,        // GroupMember[] - who to split between
@@ -270,7 +273,8 @@ const onSubmit = async () => {
     // - Check if date is selected
     
     if(!description){
-        Alert.alert("no description Provided")
+        Alert.alert("No description provided");
+        return;
     }
 
     if (!amount || parseFloat(amount) <= 0) {
@@ -290,14 +294,21 @@ const onSubmit = async () => {
       return;
     }
 
+    // Check authentication
+    if (!contextsession) {
+        Alert.alert("Authentication Error", "Please log in to add expenses");
+        return;
+    }
+
+    // Debug: Log the group data
+    // console.log("Group data in expense form:", groupData);
+    // console.log("Group ID:", groupData?.id);
+
     // 2. Data processing
     // - Calculate split amounts per participant
     // - Format date for database storage
     // - Prepare data for API call
     
-    // 3. API call
-    // - Submit expense to your backend/database
-    // - Handle success/error responses
     try {
       
       const expenseAmount=parseFloat(amount);
@@ -308,9 +319,10 @@ const onSubmit = async () => {
       .from('expenses')
       .insert({
         description: formData.description,
-        amount: expenseAmount,
-        payer_id: formData.payer?.id,
-        group_id: formData.groupId,
+        total_amount: expenseAmount,
+        paid_by: formData.payer?.id,
+        group_id: groupData?.id,
+        created_by: contextsession.id,
         type_id: formData.type?.id,
         expense_date: formData.selectedDate?.toISOString(),
         created_at: new Date().toISOString()
@@ -318,17 +330,25 @@ const onSubmit = async () => {
       .select()
       .single();
       
+
+      console.log("Expense Data", expenseData)
       if (expenseError) throw expenseError;
       
       
       
       // Create expense participants with split amounts
+      // Include ALL participants (both active and invited users)
       const participantRecords = participants.map(participant => ({
         expense_id: expenseData.id,
-        profile_id: participant.id,  // Changed from participant_id to profile_id
+        profile_id: participant.profile_id, // Will be null for invited users
+        user_email: participant.email, // Track email for all users
         amount_owed: amountPerPerson,
-        amount_paid: participant.id === payer.id ? amountPerPerson : 0  // Add amount_paid field
+        amount_paid: participant.profile_id === payer.profile_id ? amountPerPerson : 0
       }));
+
+      console.log("Participant records to insert:", participantRecords);
+      console.log("Participants data:", participants);
+      console.log("Participants profile_ids:", participants.map(p => ({ email: p.email, profile_id: p.profile_id })));
       
       const { error: participantError } = await supabase
       .from('expense_participants')
@@ -340,31 +360,91 @@ const onSubmit = async () => {
       // The payer gets credited (positive balance)
       // Other participants get debited (negative balance)
       for (const participant of participants) {
-        const balanceChange = participant.id === payer.id 
+        const balanceChange = participant.profile_id === payer.profile_id 
           ? expenseAmount - amountPerPerson  // Payer gets back what others owe them
           : -amountPerPerson;               // Others owe their share
         
-        // Update or create balance record
-        const { error: balanceError } = await supabase
-          .from('group_balances')
-          .upsert({
-            group_id: groupData?.id,
-            user_id: participant.id,
-            balance: balanceChange,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'group_id,user_id',
-            ignoreDuplicates: false
-          });
-      
-        if (balanceError) throw balanceError;
+        console.log("Updating balance for participant:", participant.email, "profile_id:", participant.profile_id, "change:", balanceChange);
+        
+        // Handle balance updates with proper error handling
+        try {
+          // First, try to get existing balance record
+          // For active users, check by user_id first, then by email
+          let existingBalance = null;
+          
+          if (participant.profile_id) {
+            // Active user - check by user_id first
+            const { data: balanceByUserId } = await supabase
+              .from('group_balances')
+              .select('*')
+              .eq('group_id', groupData?.id)
+              .eq('user_id', participant.profile_id)
+              .single();
+            existingBalance = balanceByUserId;
+          }
+          
+          // If not found by user_id, try by email
+          if (!existingBalance) {
+            const { data: balanceByEmail } = await supabase
+              .from('group_balances')
+              .select('*')
+              .eq('group_id', groupData?.id)
+              .eq('user_email', participant.email)
+              .single();
+            existingBalance = balanceByEmail;
+          }
+          
+          if (existingBalance) {
+            // Update existing record
+            const newBalance = existingBalance.balance + balanceChange;
+            const { error: updateError } = await supabase
+              .from('group_balances')
+              .update({
+                balance: newBalance,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingBalance.id);
+            
+            if (updateError) throw updateError;
+            console.log("Updated balance for", participant.email, "to", newBalance);
+          } else {
+            // Create new record
+            const { error: insertError } = await supabase
+              .from('group_balances')
+              .insert({
+                group_id: groupData?.id,
+                user_id: participant.profile_id, // Will be null for invited users
+                user_email: participant.email,
+                balance: balanceChange,
+                updated_at: new Date().toISOString()
+              });
+            
+            if (insertError) throw insertError;
+            console.log("Created new balance record for", participant.email, "with balance", balanceChange);
+          }
+        } catch (balanceError) {
+          console.error("Error updating balance for", participant.email, ":", balanceError);
+          // Don't throw here - continue with other participants
+        }
       }
 
 Alert.alert("Expense added successfully!");
+
+// Clear all form state
+setDescription('');
+setAmount('');
+setPayer(null);
+setParticipents([]);
+setSelectedType(null);
+setSelectedDate(new Date());
+
 router.back();
-} catch (error) {
-console.error('Error adding expense:', error);
-Alert.alert("Error adding expense");
+} catch (error: unknown) {
+    console.error('Error adding expense:', error);
+    Alert.alert(
+        "Error adding expense", 
+        error instanceof Error ? error.message : "An error occurred"
+    );
 }
 };
     return (
