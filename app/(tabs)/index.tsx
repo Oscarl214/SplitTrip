@@ -6,8 +6,10 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BalanceCard from '../components/balancecard';
-import Expenses from '../components/expenses';
+import { ExpenseType } from '../components/expenseform';
+import ExpensesDropDown from '../components/expensesdropdown';
 import GroupHeader from '../components/groupheader';
+import { fetchExpenseTypes } from '../utils/expenseTypes';
 import { supabase } from '../utils/supabase';
 
 
@@ -38,6 +40,23 @@ interface GroupMember {
   }
 }
 
+interface ExpenseItem {
+  id: number | null,
+  name: string | null,
+  created_by: string | null,
+  created_at: string | null, 
+  description: string | null,
+  total_amount: number | null,
+  paid_by: string | null,
+  type_id: string | null,
+  expense_date: string | null,
+  expense_types?: ExpenseType,
+  profiles?: {
+    name: string | null,
+    email: string | null
+  }
+}
+
 const Index = () => {
   const router = useRouter();
   
@@ -46,6 +65,8 @@ const [groupData,setGroupData]=useState<GroupData | null>(null)
 const [members, setMembers] = useState<GroupMember[]>([]);;
 const [loading, setLoading]= useState(true);
 
+const [expenses,SetExpenses]=useState<ExpenseItem[]>([])
+const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
 
 useFocusEffect(
   React.useCallback(() => {
@@ -128,7 +149,63 @@ console.log("error saving State", error)
   fetchGroupData();
 }, [groupinfo]); // Run when groupinfo changes
 
+// Fetch expense types on component mount
+useEffect(() => {
+  const loadExpenseTypes = async () => {
+    try {
+      const types = await fetchExpenseTypes();
+      setExpenseTypes(types);
+    } catch (error) {
+      console.error('Error loading expense types:', error);
+    }
+  };
 
+  loadExpenseTypes();
+}, []);
+
+useEffect(() => {
+  const fetchExpenses = async () => {
+    console.log('fetchExpenses called, groupinfo:', groupinfo);
+    
+    if (!groupinfo?.id) {
+      console.log('No groupinfo or group ID available yet');
+      return;
+    }
+
+    try {
+      const groupId = groupinfo.id;
+      console.log('Fetching expenses for group ID:', groupId);
+
+      const {data, error: ExpensesError} = await supabase
+        .from("expenses")
+        .select(`
+          *,
+          expense_types!expenses_type_id_fkey(name, icon, color),
+          profiles!expenses_created_by_fkey(name, email)
+        `)
+        .eq('group_id', groupId);
+
+      if(ExpensesError){
+        console.error("Error fetching expenses:", ExpensesError);
+        return;
+      }
+
+      console.log("Expenses data:", data);
+      console.log("Number of expenses found:", data?.length || 0);
+      
+
+      
+      SetExpenses(data || []);
+    } catch(error){
+      console.error('Error in fetchExpenses:', error);
+    }
+  };
+
+  // Only call fetchExpenses if groupinfo exists
+  if (groupinfo?.id) {
+    fetchExpenses();
+  }
+}, [groupinfo]);
   return (
     <SafeAreaView className='flex flex-col p-4 h-full bg-white'>
       <GroupHeader loading={loading} members={members} groupData={groupData} />  {/* Pass in title of group created and the amount of members as props once I have that data*/}
@@ -154,7 +231,8 @@ console.log("error saving State", error)
           <Text className='text-xl font-medium text-blue-500'>Add Expense</Text>
           </Pressable>
         </View>
-        <Expenses/>
+        <ExpensesDropDown expenses={expenses}  />
+        {/* <Expenses/> */}
     </SafeAreaView>
   );
 }
