@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -554,13 +554,12 @@ router.back();
                             Split between
                         </Text>
                         <View style={styles.flatListContainer}>
-                        <FlatList 
-  data={members}
-  renderItem={renderMember}
-  keyExtractor={keyExtractor}
-  showsVerticalScrollIndicator={false}
-  ItemSeparatorComponent={() => <View style={{ height: 1 }} />}
-  />
+                        {members.map((member, index) => (
+                            <View key={member.id || index}>
+                                {renderMember({ item: member })}
+                                {index < members.length - 1 && <View style={{ height: 1 }} />}
+                            </View>
+                        ))}
                         </View>
                     </View>
 

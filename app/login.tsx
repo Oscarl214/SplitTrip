@@ -97,7 +97,7 @@ export default function Login() {
     const { params, errorCode } = QueryParams.getQueryParams(url);
   
   
-    console.log("token", params)
+
     if (errorCode) throw new Error(errorCode);
     const { access_token, refresh_token } = params;
   
@@ -109,7 +109,7 @@ export default function Login() {
     });
     if (error) throw error;
   
-    console.log("session", data.session)
+
   
     if (!data.session || !data.session.user) {
       console.error('Invalid session data');
@@ -121,12 +121,12 @@ export default function Login() {
       email: data.session.user.email ?? 'no-email@example.com'
     });
     
-    // Navigate to app-content after successful login
+
     router.replace('/app-content');
     return data.session;
   }, [setContextSession, router]);
 
-  // Use useEffect to handle URL processing instead of conditional hook call
+
   useEffect(() => {
     if (url) {
       createSessionFromUrl(url);

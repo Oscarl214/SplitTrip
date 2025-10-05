@@ -1,17 +1,102 @@
 import { Ionicons } from '@expo/vector-icons'
-import React from 'react'
-import { Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import React, { useEffect, useState } from 'react'
+import { Text, View } from 'react-native'
+
+import { useAuth } from '../provider/authContext'
+import { supabase } from '../utils/supabase'
 interface BalanceCardProps {
-    amount: number
+
+    groupData: GroupData | null;
+  }
+
+  interface GroupData {
+    id: string | null,
+    name: string | null,
+  created_by: string | null,
+  created_at: string | null, 
+  description: string | null,
   }
 
 
-const BalanceCard = ({amount}: BalanceCardProps) => {
+  interface Balance {
+    balance: 'string' | null
+  }
+const BalanceCard = ({groupData}: BalanceCardProps) => {
 
-    const isNegative= amount<0
+const {contextsession}=useAuth()
+const [userBalance,setUserBalance]=useState('')
 
-    const formattedAmount = Math.abs(amount).toFixed(2)
+
+  useEffect(()=>{
+    console.log("BalanceCard useEffect triggered");
+    console.log("groupData:", groupData);
+    console.log("contextsession:", contextsession);
+
+    if(!contextsession?.id || !groupData?.id) {
+      console.log("Missing required data - contextsession or groupData");
+      return;
+    }
+
+    const fetchUsersBalance=async ()=>{
+    try {
+      console.log("Starting fetchUsersBalance");
+      console.log("group_id:", groupData?.id);
+      console.log("user_id:", contextsession?.id);
+
+      // Use the auth ID directly as the profile ID
+      console.log("Using auth ID as profile ID:", contextsession?.id)
+      const profileId = contextsession?.id
+
+      // First, let's check if there are any records in group_balances for this user/group
+      const {data: allBalances, error: allBalancesError} = await supabase
+        .from('group_balances')
+        .select('*')
+        .eq('group_id', groupData?.id)
+        .eq('user_id', profileId)
+      
+      console.log("All balances for this user/group:", allBalances)
+      console.log("All balances error:", allBalancesError)
+
+      const {data:myBalance, error:Balanceerror}= await supabase
+      .from('group_balances')
+      .select('balance')
+      .eq('group_id', groupData?.id)
+      .eq('user_id', profileId)
+      .single()
+
+if(Balanceerror){
+  console.error("Error Fetching Full Balance:", Balanceerror)
+  console.log("This might mean no balance record exists for this user/group")
+  return
+}
+
+console.log("users total balance", myBalance)
+console.log("Balance value:", myBalance?.balance)
+console.log("Balance type:", typeof myBalance?.balance)
+
+if(myBalance && myBalance.balance !== null && myBalance.balance !== undefined) {
+  console.log("Setting balance to:", myBalance.balance)
+  setUserBalance(myBalance.balance.toString())
+} else {
+  console.log("No balance data found or balance is null/undefined");
+  setUserBalance('0.00')
+}
+
+    }catch(error){
+      console.error("Error Getting Balance:", error)
+  }
+
+  }
+
+  fetchUsersBalance()
+
+  }, [contextsession?.id, groupData?.id])
+
+
+  const isNegative= Number(userBalance)<0;
+
+    const formattedAmount = Math.abs(Number(userBalance)).toFixed(2)
   return (
     <LinearGradient
     colors={['#89ffdd', '#ffffff']}
@@ -39,7 +124,8 @@ const BalanceCard = ({amount}: BalanceCardProps) => {
           {isNegative ? 'You owe': ' You are owed'}
         </Text>
         <Text className={`text-4xl font-bold ${isNegative ? 'text-red-500' : 'text-green-500'}`}>
-          ${formattedAmount}
+   
+          ${userBalance}
         </Text>
       </View>
     </View>

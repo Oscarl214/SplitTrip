@@ -81,7 +81,7 @@ const Group = () => {
         try {
           const value = await AsyncStorage.getItem("activeGroup");
           if (value !== null) {
-            console.log("Group Info", value);
+   
             const parsedValue = JSON.parse(value);
             setGroupInfo(parsedValue);
           }
@@ -103,7 +103,7 @@ const Group = () => {
       const fetchGroupData = async () => {
         try {
           const groupId = groupinfo.id;
-          console.log('Fetching group with ID:', groupId);
+     
     
           // Fetch group data
           const { data, error: groupError } = await supabase
@@ -133,8 +133,7 @@ const Group = () => {
             setGroupData(data);
             setMembers(members || []);
           },2000)
-          console.log('Group data loaded:', data);
-          console.log('Members loaded:', members);
+
         } catch (error) {
           console.error('Error in fetchGroupData:', error);
         }

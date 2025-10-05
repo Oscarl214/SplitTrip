@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { FlatList, Text, View } from 'react-native';
-
+import { useAuth } from '../provider/authContext';
 interface ExpenseType {
   name: string;
   icon: string;
@@ -22,17 +22,26 @@ interface ExpenseItem {
   profiles?: {
     name: string | null,
     email: string | null
-  }
+  },
+  paid_by_profile?: {
+    name: string | null,
+    email: string | null
+  },
+  expense_participants?: {
+    user_email: string | null
+  }[]
 }
 
 interface ExpensesDropDownProps {
   expenses: ExpenseItem[]
+  currentUserId?: string
+  currentUserName?: string
+  currentUserEmail?: string
 }
 
-const ExpensesDropDown = ({expenses}: ExpensesDropDownProps) => {
-    console.log('ExpensesDropDown received expenses:', expenses);
-    console.log('Number of expenses:', expenses?.length || 0);
+const ExpensesDropDown = ({expenses, currentUserId, currentUserName, currentUserEmail}: ExpensesDropDownProps) => {
 
+    const {contextsession}= useAuth()
     // Import static types as fallback
     const { EXPENSE_TYPES } = require('../components/expenseform');
 
@@ -52,11 +61,7 @@ const ExpensesDropDown = ({expenses}: ExpensesDropDownProps) => {
     };
 
     const renderExpense = ({item}: {item: ExpenseItem}) => {
-        // Debug logging to see what type data we're getting
-        console.log('Expense item:', item);
-        console.log('Type ID:', item.type_id);
-        console.log('Expense types data:', item.expense_types);
-        
+
         const formatDate = (dateString: string | null) => {
             if (!dateString) return 'Unknown date';
             try {
@@ -97,9 +102,41 @@ const ExpensesDropDown = ({expenses}: ExpensesDropDownProps) => {
             return 'Unknown user';
         };
 
-        const typeInfo = getExpenseTypeInfo(item.type_id, item.expense_types);
-        console.log('Final type info:', typeInfo);
+        const getPaidByDisplayName = () => {
+            // First try the fetched profile data
+            if (item.paid_by_profile?.name) {
+                return item.paid_by_profile.name;
+            }
+            if (item.paid_by_profile?.email) {
+                return item.paid_by_profile.email;
+            }
+            
+            // Fallback: if paid_by matches current user, use session data
+            if (item.paid_by === currentUserId) {
+                if (contextsession?.name) {
+                    return contextsession.name;
+                }
+                if (contextsession?.email) {
+                    return contextsession.email;
+                }
+            }
+            
+            // If we have a paid_by ID but no profile, try to get email from participants
+            if (item.paid_by) {
+                // Try to find the email from expense participants
+                const participantEmail = item.expense_participants?.find(p => p.user_email)?.user_email;
+                if (participantEmail) {
+                    return participantEmail;
+                }
+                
+                // If no participant email, show shortened user ID
+                return `User (${item.paid_by.substring(0, 8)}...)`;
+            }
+            return 'Unknown user';
+        };
 
+        const typeInfo = getExpenseTypeInfo(item.type_id, item.expense_types);
+     
         return (
             <View
                 key={item.id}
@@ -116,6 +153,9 @@ const ExpensesDropDown = ({expenses}: ExpensesDropDownProps) => {
                     <Text className="font-medium">{item.description || 'No description'}</Text>
                     <Text className="text-sm text-gray-500">
                         {typeInfo.name} · {formatDate(item.expense_date)}
+                    </Text>
+                    <Text className="text-xs text-gray-400">
+                        Paid by: {getPaidByDisplayName()} 
                     </Text>
                     <Text className="text-xs text-gray-400">
                         Logged by: {getUserDisplayName()} at {formatDateTime(item.created_at)}

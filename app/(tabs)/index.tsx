@@ -9,6 +9,7 @@ import BalanceCard from '../components/balancecard';
 import { ExpenseType } from '../components/expenseform';
 import ExpensesDropDown from '../components/expensesdropdown';
 import GroupHeader from '../components/groupheader';
+import { useAuth } from '../provider/authContext';
 import { fetchExpenseTypes } from '../utils/expenseTypes';
 import { supabase } from '../utils/supabase';
 
@@ -54,11 +55,19 @@ interface ExpenseItem {
   profiles?: {
     name: string | null,
     email: string | null
-  }
+  },
+  paid_by_profile?: {
+    name: string | null,
+    email: string | null
+  },
+  expense_participants?: {
+    user_email: string | null
+  }[]
 }
 
 const Index = () => {
   const router = useRouter();
+  const {contextsession} = useAuth();
   
   const [ groupinfo, setGroupInfo]=useState<GroupInfo | null>(null);
 const [groupData,setGroupData]=useState<GroupData | null>(null)
@@ -96,7 +105,7 @@ useEffect(() => {
   const fetchGroupData = async () => {
     try {
       const groupId = groupinfo.id;
-      console.log('Fetching group with ID:', groupId);
+
 
       // Fetch group data
       const { data, error: groupError } = await supabase
@@ -139,8 +148,7 @@ useEffect(() => {
       }catch(error){
 console.log("error saving State", error)
       }
-      console.log('Group data loaded:', data);
-      console.log('Members loaded:', members);
+   
     } catch (error) {
       console.error('Error in fetchGroupData:', error);
     }
@@ -165,7 +173,7 @@ useEffect(() => {
 
 useEffect(() => {
   const fetchExpenses = async () => {
-    console.log('fetchExpenses called, groupinfo:', groupinfo);
+
     
     if (!groupinfo?.id) {
       console.log('No groupinfo or group ID available yet');
@@ -174,14 +182,15 @@ useEffect(() => {
 
     try {
       const groupId = groupinfo.id;
-      console.log('Fetching expenses for group ID:', groupId);
+  
 
       const {data, error: ExpensesError} = await supabase
         .from("expenses")
         .select(`
           *,
           expense_types!expenses_type_id_fkey(name, icon, color),
-          profiles!expenses_created_by_fkey(name, email)
+          profiles!expenses_created_by_fkey(name, email),
+          expense_participants!expense_participants_expense_id_fkey(user_email)
         `)
         .eq('group_id', groupId);
 
@@ -190,12 +199,26 @@ useEffect(() => {
         return;
       }
 
-      console.log("Expenses data:", data);
-      console.log("Number of expenses found:", data?.length || 0);
+      // Manually fetch profile data for each expense's paid_by user
+      const expensesWithPaidByProfiles = await Promise.all(
+        (data || []).map(async (expense) => {
+          if (expense.paid_by) {
+            const { data: paidByProfile } = await supabase
+              .from('profiles')
+              .select('name, email')
+              .eq('id', expense.paid_by)
+              .single();
+            
+            return {
+              ...expense,
+              paid_by_profile: paidByProfile
+            };
+          }
+          return expense;
+        })
+      );
       
-
-      
-      SetExpenses(data || []);
+      SetExpenses(expensesWithPaidByProfiles);
     } catch(error){
       console.error('Error in fetchExpenses:', error);
     }
@@ -219,7 +242,7 @@ useEffect(() => {
           <Ionicons name="arrow-forward-outline" size={14} color='blue' /> 
         </Pressable>
       </View>
-        <BalanceCard amount={-24.50}/>
+        <BalanceCard  groupData={groupData}/>
         <View className='flex flex-row justify-between mt-8'>
           <Text className='text-2xl font-bold'>Recent Expenses</Text>
           <Pressable 
@@ -231,7 +254,12 @@ useEffect(() => {
           <Text className='text-xl font-medium text-blue-500'>Add Expense</Text>
           </Pressable>
         </View>
-        <ExpensesDropDown expenses={expenses}  />
+        <ExpensesDropDown 
+          expenses={expenses} 
+          currentUserId={contextsession?.id}
+          currentUserName={contextsession?.name}
+          currentUserEmail={contextsession?.email}
+        />
         {/* <Expenses/> */}
     </SafeAreaView>
   );
