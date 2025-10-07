@@ -320,7 +320,7 @@ const onSubmit = async () => {
       .insert({
         description: formData.description,
         total_amount: expenseAmount,
-        paid_by: formData.payer?.id,
+        paid_by: formData.payer?.id, // Use group member ID for foreign key constraint
         group_id: groupData?.id,
         created_by: contextsession.id,
         type_id: formData.type?.id,
@@ -343,7 +343,7 @@ const onSubmit = async () => {
         profile_id: participant.profile_id, // Will be null for invited users
         user_email: participant.email, // Track email for all users
         amount_owed: amountPerPerson,
-        amount_paid: participant.profile_id === payer.profile_id ? amountPerPerson : 0
+        amount_paid: participant.profile_id === formData.payer?.profile_id ? amountPerPerson : 0
       }));
 
       console.log("Participant records to insert:", participantRecords);
